@@ -1,0 +1,26 @@
+ingredient_name,unit,quantity_on_hand,reorder_threshold,unit_cost,expiry_date,supplier
+Espresso Beans,kg,3.2,5.0,18.50,2026-04-15,Mountain Roasters Co
+Whole Milk,liters,8.0,15.0,1.20,2026-03-10,Valley Dairy Farm
+Oat Milk,liters,12.5,8.0,2.40,2026-04-01,Oatly Direct
+Coconut Milk,liters,6.0,4.0,2.80,2026-05-20,Tropical Goods Inc
+Vanilla Syrup,liters,4.5,3.0,8.50,2026-09-01,Monin Supplies
+Caramel Sauce,liters,2.8,2.0,9.00,2026-08-15,Monin Supplies
+Chocolate Sauce,liters,3.0,2.5,7.50,2026-07-10,Sweet Things Co
+Matcha Powder,kg,0.8,0.5,42.00,2026-06-30,Kyoto Tea Imports
+Chai Concentrate,liters,5.0,4.0,6.00,2026-04-20,Spice Route LLC
+Croissant Dough,units,18,25,1.00,2026-03-09,Boulangerie Wholesale
+Blueberries,kg,1.2,2.0,12.00,2026-03-09,Fresh Harvest Farms
+Bananas,kg,4.5,3.0,1.50,2026-03-12,Fresh Harvest Farms
+Avocados,units,6,10,1.80,2026-03-08,Green Valley Produce
+Sourdough Bread,loaves,5,8,3.50,2026-03-09,Artisan Bakery Co
+Turkey Breast,kg,2.0,2.5,14.00,2026-03-11,Metro Deli Supplies
+Bacon,kg,1.5,2.0,11.00,2026-03-14,Metro Deli Supplies
+Mozzarella,kg,1.8,2.0,9.50,2026-03-13,Valley Dairy Farm
+Romaine Lettuce,heads,8,6,2.00,2026-03-10,Green Valley Produce
+Quinoa,kg,3.0,2.0,5.50,2026-08-01,Grain & Seed Co
+Mixed Berries Frozen,kg,2.5,3.0,8.00,2026-06-15,Fresh Harvest Farms
+Acai Puree,kg,1.0,1.5,28.00,2026-03-15,Amazonia Foods
+Granola,kg,2.5,2.0,6.00,2026-05-01,Wholesome Crunch Co
+Whey Protein,kg,1.5,1.0,22.00,2026-07-01,Nutrition Depot
+Peanut Butter,kg,2.0,1.5,7.00,2026-06-01,Natural Nut Co
+Sugar,kg,8.0,5.0,1.80,2026-12-01,Metro Supplies

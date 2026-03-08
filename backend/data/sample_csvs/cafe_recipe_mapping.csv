@@ -1,0 +1,62 @@
+menu_item_name,ingredient_name,quantity_needed,unit
+Espresso,Espresso Beans,0.018,kg
+Latte,Espresso Beans,0.018,kg
+Latte,Whole Milk,0.24,liters
+Cappuccino,Espresso Beans,0.018,kg
+Cappuccino,Whole Milk,0.18,liters
+Americano,Espresso Beans,0.018,kg
+Mocha,Espresso Beans,0.018,kg
+Mocha,Whole Milk,0.20,liters
+Mocha,Chocolate Sauce,0.03,liters
+Cold Brew,Espresso Beans,0.035,kg
+Caramel Macchiato,Espresso Beans,0.018,kg
+Caramel Macchiato,Whole Milk,0.22,liters
+Caramel Macchiato,Vanilla Syrup,0.02,liters
+Caramel Macchiato,Caramel Sauce,0.015,liters
+Flat White,Espresso Beans,0.020,kg
+Flat White,Whole Milk,0.20,liters
+Earl Grey,Sugar,0.005,kg
+Matcha Latte,Matcha Powder,0.004,kg
+Matcha Latte,Oat Milk,0.25,liters
+Chai Latte,Chai Concentrate,0.15,liters
+Chai Latte,Whole Milk,0.20,liters
+Green Tea,Sugar,0.005,kg
+Herbal Infusion,Sugar,0.005,kg
+Croissant,Croissant Dough,1,units
+Blueberry Muffin,Blueberries,0.04,kg
+Blueberry Muffin,Sugar,0.03,kg
+Chocolate Chip Cookie,Chocolate Sauce,0.02,liters
+Chocolate Chip Cookie,Sugar,0.025,kg
+Banana Bread,Bananas,0.15,kg
+Banana Bread,Sugar,0.04,kg
+Cinnamon Roll,Sugar,0.05,kg
+Avocado Toast,Avocados,1,units
+Avocado Toast,Sourdough Bread,0.15,loaves
+Turkey Club,Turkey Breast,0.12,kg
+Turkey Club,Bacon,0.04,kg
+Turkey Club,Romaine Lettuce,0.1,heads
+Turkey Club,Sourdough Bread,0.15,loaves
+Grilled Cheese,Mozzarella,0.10,kg
+Grilled Cheese,Sourdough Bread,0.15,loaves
+Caprese Panini,Mozzarella,0.08,kg
+Caprese Panini,Sourdough Bread,0.15,loaves
+Caesar Salad,Romaine Lettuce,0.5,heads
+Caesar Salad,Mozzarella,0.03,kg
+Quinoa Bowl,Quinoa,0.08,kg
+Quinoa Bowl,Romaine Lettuce,0.2,heads
+Quinoa Bowl,Mozzarella,0.04,kg
+Garden Salad,Romaine Lettuce,0.4,heads
+Berry Smoothie,Mixed Berries Frozen,0.15,kg
+Berry Smoothie,Bananas,0.10,kg
+Berry Smoothie,Whole Milk,0.15,liters
+Mango Tango,Coconut Milk,0.25,liters
+Green Machine,Bananas,0.10,kg
+Green Machine,Peanut Butter,0.03,kg
+Green Machine,Oat Milk,0.25,liters
+Acai Bowl,Acai Puree,0.15,kg
+Acai Bowl,Bananas,0.10,kg
+Acai Bowl,Granola,0.05,kg
+Protein Shake,Whey Protein,0.04,kg
+Protein Shake,Bananas,0.10,kg
+Protein Shake,Peanut Butter,0.03,kg
+Protein Shake,Oat Milk,0.25,liters

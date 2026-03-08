@@ -1,0 +1,31 @@
+name,category,price,ingredient_cost,description,is_active
+Espresso,Coffee,3.50,0.45,Rich double-shot espresso pulled from our house blend,true
+Americano,Coffee,4.00,0.50,Espresso with hot water for a smooth long black,true
+Latte,Coffee,5.50,1.10,Creamy steamed milk with a double espresso shot,true
+Cappuccino,Coffee,5.50,1.05,Equal parts espresso steamed milk and velvety foam,true
+Mocha,Coffee,6.00,1.60,Espresso with chocolate sauce and steamed milk,true
+Cold Brew,Coffee,5.00,0.65,Slow-steeped 18-hour cold brew concentrate over ice,true
+Caramel Macchiato,Coffee,6.25,1.45,Vanilla latte with caramel drizzle,true
+Flat White,Coffee,5.25,1.00,Velvety microfoam with a double ristretto shot,true
+Earl Grey,Tea,3.75,0.40,Classic bergamot-infused black tea,true
+Matcha Latte,Tea,5.75,1.80,Ceremonial grade matcha whisked with steamed oat milk,true
+Chai Latte,Tea,5.25,1.15,House-spiced chai concentrate with steamed milk,true
+Green Tea,Tea,3.50,0.35,Organic sencha green tea,true
+Herbal Infusion,Tea,3.75,0.45,Rotating selection of caffeine-free herbal blends,true
+Croissant,Pastries,4.25,1.20,Buttery flaky French-style croissant baked fresh daily,true
+Blueberry Muffin,Pastries,4.00,1.10,Moist muffin loaded with fresh blueberries,true
+Chocolate Chip Cookie,Pastries,3.25,0.80,Chewy cookie with dark chocolate chunks,true
+Banana Bread,Pastries,4.50,1.30,Homemade banana bread with walnuts,true
+Cinnamon Roll,Pastries,5.00,1.50,Warm cinnamon roll with cream cheese glaze,true
+Avocado Toast,Sandwiches,9.50,5.20,Smashed avocado on sourdough with cherry tomatoes and microgreens,true
+Turkey Club,Sandwiches,10.50,4.80,Roasted turkey with bacon lettuce tomato on ciabatta,true
+Grilled Cheese,Sandwiches,7.50,2.60,Three-cheese blend on artisan sourdough,true
+Caprese Panini,Sandwiches,9.00,3.90,Fresh mozzarella tomato and basil with balsamic glaze,true
+Caesar Salad,Salads,8.50,3.20,Romaine with house-made caesar dressing croutons and parmesan,true
+Quinoa Bowl,Salads,10.00,4.50,Quinoa with roasted vegetables feta and lemon vinaigrette,true
+Garden Salad,Salads,7.00,2.40,Mixed greens with seasonal vegetables and balsamic,true
+Berry Smoothie,Smoothies,7.00,3.10,Strawberry blueberry banana and yogurt,true
+Mango Tango,Smoothies,7.50,3.40,Mango pineapple coconut milk and lime,true
+Green Machine,Smoothies,7.50,3.50,Spinach banana peanut butter and almond milk,true
+Acai Bowl,Smoothies,11.00,6.80,Acai blend topped with granola banana and honey,true
+Protein Shake,Smoothies,8.00,3.60,Whey protein banana peanut butter and oat milk,false

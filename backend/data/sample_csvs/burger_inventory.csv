@@ -1,0 +1,21 @@
+ingredient_name,unit,quantity_on_hand,reorder_threshold,unit_cost,expiry_date,supplier
+Beef Patties,kg,12.0,15.0,9.50,2026-03-12,Prime Meats Inc
+Brioche Buns,units,45,60,0.80,2026-03-09,Artisan Bakery Co
+Cheddar Cheese,kg,3.5,3.0,8.00,2026-03-20,Valley Dairy Farm
+Swiss Cheese,kg,1.8,1.5,10.00,2026-03-18,Valley Dairy Farm
+American Cheese,kg,2.5,2.0,6.50,2026-03-22,Valley Dairy Farm
+Bacon Strips,kg,4.0,5.0,12.00,2026-03-14,Prime Meats Inc
+Lettuce,heads,6,8,1.80,2026-03-09,Green Valley Produce
+Tomatoes,kg,3.0,4.0,3.50,2026-03-10,Green Valley Produce
+Onions,kg,5.0,3.0,1.20,2026-03-25,Green Valley Produce
+Pickles,kg,4.0,2.0,3.00,2026-04-15,Metro Supplies
+Frozen Fries,kg,18.0,10.0,2.80,2026-06-01,Sysco Foods
+Sweet Potato Fries,kg,6.0,5.0,4.50,2026-05-15,Sysco Foods
+Onion Rings Frozen,kg,4.5,3.0,5.00,2026-05-20,Sysco Foods
+BBQ Sauce,liters,3.0,2.0,4.50,2026-08-01,Kansas City Sauces
+Mushrooms,kg,1.2,2.0,7.00,2026-03-10,Green Valley Produce
+Black Bean Patties,units,12,15,2.50,2026-03-15,Plant Power Foods
+Avocados,units,5,8,1.80,2026-03-08,Green Valley Produce
+Ice Cream Base,liters,6.0,4.0,5.50,2026-04-01,Valley Dairy Farm
+Brownie Mix,kg,3.0,2.0,4.00,2026-07-01,Sweet Things Co
+Soda Syrup,liters,25.0,10.0,2.00,2026-09-01,Coca-Cola Distribution

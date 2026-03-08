@@ -1,0 +1,67 @@
+menu_item_name,ingredient_name,quantity_needed,unit
+Classic Burger,Beef Patties,0.113,kg
+Classic Burger,Brioche Buns,1,units
+Classic Burger,Lettuce,0.05,heads
+Classic Burger,Tomatoes,0.03,kg
+Classic Burger,Onions,0.02,kg
+Classic Burger,Pickles,0.02,kg
+Bacon Cheeseburger,Beef Patties,0.113,kg
+Bacon Cheeseburger,Brioche Buns,1,units
+Bacon Cheeseburger,Cheddar Cheese,0.03,kg
+Bacon Cheeseburger,Bacon Strips,0.04,kg
+Bacon Cheeseburger,Lettuce,0.05,heads
+Bacon Cheeseburger,Tomatoes,0.03,kg
+Mushroom Swiss,Beef Patties,0.113,kg
+Mushroom Swiss,Brioche Buns,1,units
+Mushroom Swiss,Swiss Cheese,0.03,kg
+Mushroom Swiss,Mushrooms,0.06,kg
+BBQ Bacon Burger,Beef Patties,0.113,kg
+BBQ Bacon Burger,Brioche Buns,1,units
+BBQ Bacon Burger,Bacon Strips,0.04,kg
+BBQ Bacon Burger,BBQ Sauce,0.03,liters
+BBQ Bacon Burger,Onion Rings Frozen,0.05,kg
+Veggie Burger,Black Bean Patties,1,units
+Veggie Burger,Brioche Buns,1,units
+Veggie Burger,Avocados,0.5,units
+Veggie Burger,Lettuce,0.05,heads
+Double Stack,Beef Patties,0.226,kg
+Double Stack,Brioche Buns,1,units
+Double Stack,American Cheese,0.06,kg
+Double Stack,Pickles,0.03,kg
+Double Stack,Onions,0.02,kg
+Spicy Jalapeño Burger,Beef Patties,0.113,kg
+Spicy Jalapeño Burger,Brioche Buns,1,units
+Spicy Jalapeño Burger,Pickles,0.03,kg
+Truffle Burger,Beef Patties,0.113,kg
+Truffle Burger,Brioche Buns,1,units
+Truffle Burger,Swiss Cheese,0.03,kg
+Regular Fries,Frozen Fries,0.15,kg
+Loaded Fries,Frozen Fries,0.15,kg
+Loaded Fries,Cheddar Cheese,0.03,kg
+Loaded Fries,Bacon Strips,0.03,kg
+Onion Rings,Onion Rings Frozen,0.12,kg
+Sweet Potato Fries,Sweet Potato Fries,0.15,kg
+Coleslaw,Onions,0.02,kg
+Milkshake,Ice Cream Base,0.20,liters
+Brownie Sundae,Brownie Mix,0.10,kg
+Brownie Sundae,Ice Cream Base,0.10,liters
+Classic Combo,Beef Patties,0.113,kg
+Classic Combo,Brioche Buns,1,units
+Classic Combo,Frozen Fries,0.15,kg
+Classic Combo,Soda Syrup,0.05,liters
+Bacon Combo,Beef Patties,0.113,kg
+Bacon Combo,Brioche Buns,1,units
+Bacon Combo,Cheddar Cheese,0.03,kg
+Bacon Combo,Bacon Strips,0.04,kg
+Bacon Combo,Frozen Fries,0.15,kg
+Bacon Combo,Soda Syrup,0.05,liters
+Double Combo,Beef Patties,0.226,kg
+Double Combo,Brioche Buns,1,units
+Double Combo,Frozen Fries,0.15,kg
+Double Combo,Ice Cream Base,0.20,liters
+Veggie Combo,Black Bean Patties,1,units
+Veggie Combo,Brioche Buns,1,units
+Veggie Combo,Sweet Potato Fries,0.15,kg
+Kids Burger Meal,Beef Patties,0.057,kg
+Kids Burger Meal,Brioche Buns,1,units
+Kids Burger Meal,Frozen Fries,0.10,kg

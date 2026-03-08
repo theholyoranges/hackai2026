@@ -1,0 +1,26 @@
+name,category,price,ingredient_cost,description,is_active
+Classic Burger,Burgers,9.50,3.20,Quarter-pound beef patty with lettuce tomato onion and pickles,true
+Bacon Cheeseburger,Burgers,11.50,4.50,Classic burger topped with crispy bacon and cheddar cheese,true
+Mushroom Swiss,Burgers,12.00,4.80,Sauteed mushrooms and melted Swiss cheese on a beef patty,true
+BBQ Bacon Burger,Burgers,12.50,5.10,Smoky BBQ sauce crispy onion rings and bacon,true
+Veggie Burger,Burgers,10.00,4.20,House-made black bean patty with avocado and chipotle mayo,true
+Double Stack,Burgers,14.00,5.80,Two quarter-pound patties with American cheese and special sauce,true
+Spicy Jalapeño Burger,Burgers,11.00,4.00,Pepper jack cheese pickled jalapeños and sriracha mayo,true
+Truffle Burger,Burgers,15.00,6.50,Truffle aioli arugula and gruyere on a brioche bun,true
+Regular Fries,Sides,4.00,0.90,Crispy golden hand-cut fries with sea salt,true
+Loaded Fries,Sides,7.00,2.80,Fries topped with cheese bacon and sour cream,true
+Onion Rings,Sides,5.50,1.60,Beer-battered onion rings with ranch dipping sauce,true
+Sweet Potato Fries,Sides,5.00,1.40,Crispy sweet potato fries with chipotle mayo,true
+Coleslaw,Sides,3.50,1.00,Creamy house-made coleslaw,true
+Fountain Soda,Drinks,2.50,0.30,Choice of Coke Sprite or Dr Pepper,true
+Lemonade,Drinks,3.50,0.60,Fresh-squeezed lemonade,true
+Milkshake,Drinks,6.50,2.20,Hand-spun shake in vanilla chocolate or strawberry,true
+Iced Tea,Drinks,2.50,0.25,Fresh-brewed unsweetened iced tea,true
+Craft Root Beer,Drinks,4.00,1.20,Small-batch craft root beer on tap,true
+Brownie Sundae,Desserts,7.00,2.50,Warm fudge brownie with vanilla ice cream,true
+Apple Pie Slice,Desserts,5.50,2.00,Homestyle apple pie served warm with whipped cream,true
+Classic Combo,Combos,13.50,4.40,Classic Burger with Regular Fries and Fountain Soda,true
+Bacon Combo,Combos,16.00,5.70,Bacon Cheeseburger with Regular Fries and Fountain Soda,true
+Double Combo,Combos,18.50,7.00,Double Stack with Loaded Fries and Milkshake,true
+Veggie Combo,Combos,14.00,5.50,Veggie Burger with Sweet Potato Fries and Lemonade,true
+Kids Burger Meal,Combos,7.50,2.60,Small patty with fries and juice box,true
