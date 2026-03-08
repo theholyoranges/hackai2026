@@ -1,0 +1,128 @@
+menu_item_name,ingredient_name,quantity_needed,unit
+Bruschetta Trio,Ciabatta Bread,0.5,loaves
+Bruschetta Trio,Heirloom Tomatoes,0.15,kg
+Bruschetta Trio,Fresh Basil,0.1,bunches
+Bruschetta Trio,Extra Virgin Olive Oil,0.03,liters
+Bruschetta Trio,Garlic,0.5,heads
+Burrata Caprese,Burrata,1,pieces
+Burrata Caprese,Heirloom Tomatoes,0.2,kg
+Burrata Caprese,Fresh Basil,0.1,bunches
+Burrata Caprese,Extra Virgin Olive Oil,0.02,liters
+Calamari Fritti,Fresh Calamari,0.25,kg
+Calamari Fritti,Breadcrumbs,0.05,kg
+Calamari Fritti,Lemons,1,pieces
+Calamari Fritti,San Marzano Tomatoes,0.2,cans
+Arancini,Arborio Rice,0.15,kg
+Arancini,Fresh Mozzarella,0.05,kg
+Arancini,Breadcrumbs,0.03,kg
+Arancini,Eggs,0.08,dozen
+Carpaccio di Manzo,Beef Tenderloin,0.12,kg
+Carpaccio di Manzo,Arugula,0.05,kg
+Carpaccio di Manzo,Parmigiano Reggiano,0.03,kg
+Carpaccio di Manzo,Lemons,0.5,pieces
+Carpaccio di Manzo,Extra Virgin Olive Oil,0.02,liters
+Spaghetti Carbonara,Spaghetti Pasta,0.15,kg
+Spaghetti Carbonara,Guanciale,0.08,kg
+Spaghetti Carbonara,Pecorino Romano,0.04,kg
+Spaghetti Carbonara,Eggs,0.17,dozen
+Penne Arrabbiata,Penne Pasta,0.15,kg
+Penne Arrabbiata,San Marzano Tomatoes,0.3,cans
+Penne Arrabbiata,Garlic,0.3,heads
+Penne Arrabbiata,Extra Virgin Olive Oil,0.02,liters
+Fettuccine Alfredo,Fettuccine Pasta,0.15,kg
+Fettuccine Alfredo,Parmigiano Reggiano,0.05,kg
+Fettuccine Alfredo,Heavy Cream,0.1,liters
+Fettuccine Alfredo,Eggs,0.08,dozen
+Linguine alle Vongole,Spaghetti Pasta,0.15,kg
+Linguine alle Vongole,Fresh Clams,0.3,kg
+Linguine alle Vongole,Garlic,0.5,heads
+Linguine alle Vongole,Extra Virgin Olive Oil,0.03,liters
+Linguine alle Vongole,Lemons,0.5,pieces
+Rigatoni Bolognese,Penne Pasta,0.15,kg
+Rigatoni Bolognese,San Marzano Tomatoes,0.4,cans
+Rigatoni Bolognese,Parmigiano Reggiano,0.03,kg
+Cacio e Pepe,Spaghetti Pasta,0.15,kg
+Cacio e Pepe,Pecorino Romano,0.06,kg
+Lobster Ravioli,Lobster Meat,0.12,kg
+Lobster Ravioli,Fettuccine Pasta,0.12,kg
+Lobster Ravioli,Heavy Cream,0.08,liters
+Lobster Ravioli,Saffron,0.1,grams
+Lobster Ravioli,Eggs,0.17,dozen
+Margherita Pizza,Pizza Dough,1,balls
+Margherita Pizza,San Marzano Tomatoes,0.25,cans
+Margherita Pizza,Fresh Mozzarella,0.15,kg
+Margherita Pizza,Fresh Basil,0.1,bunches
+Margherita Pizza,Extra Virgin Olive Oil,0.02,liters
+Diavola Pizza,Pizza Dough,1,balls
+Diavola Pizza,San Marzano Tomatoes,0.25,cans
+Diavola Pizza,Fresh Mozzarella,0.12,kg
+Quattro Formaggi,Pizza Dough,1,balls
+Quattro Formaggi,Fresh Mozzarella,0.1,kg
+Quattro Formaggi,Gorgonzola,0.05,kg
+Quattro Formaggi,Parmigiano Reggiano,0.04,kg
+Prosciutto e Rucola,Pizza Dough,1,balls
+Prosciutto e Rucola,Fresh Mozzarella,0.1,kg
+Prosciutto e Rucola,Prosciutto di Parma,0.06,kg
+Prosciutto e Rucola,Arugula,0.03,kg
+Prosciutto e Rucola,Parmigiano Reggiano,0.03,kg
+Pizza Bianca,Pizza Dough,1,balls
+Pizza Bianca,Ricotta,0.1,kg
+Pizza Bianca,Fresh Mozzarella,0.1,kg
+Pizza Bianca,Garlic,0.3,heads
+Chicken Parmigiana,Chicken Breast,0.25,kg
+Chicken Parmigiana,Breadcrumbs,0.05,kg
+Chicken Parmigiana,San Marzano Tomatoes,0.3,cans
+Chicken Parmigiana,Fresh Mozzarella,0.1,kg
+Chicken Parmigiana,Spaghetti Pasta,0.12,kg
+Chicken Parmigiana,Eggs,0.08,dozen
+Veal Piccata,Veal Shank,0.5,pieces
+Veal Piccata,Lemons,1,pieces
+Veal Piccata,Heavy Cream,0.05,liters
+Branzino al Forno,Branzino,1,whole fish
+Branzino al Forno,Lemons,1,pieces
+Branzino al Forno,Extra Virgin Olive Oil,0.03,liters
+Branzino al Forno,Fresh Basil,0.1,bunches
+Osso Buco,Veal Shank,1,pieces
+Osso Buco,Arborio Rice,0.15,kg
+Osso Buco,Saffron,0.15,grams
+Osso Buco,San Marzano Tomatoes,0.3,cans
+Osso Buco,Lemons,0.5,pieces
+Eggplant Parmigiana,Eggplant,1,pieces
+Eggplant Parmigiana,San Marzano Tomatoes,0.3,cans
+Eggplant Parmigiana,Fresh Mozzarella,0.12,kg
+Eggplant Parmigiana,Breadcrumbs,0.04,kg
+Eggplant Parmigiana,Fresh Basil,0.05,bunches
+Caesar Salad,Romaine Lettuce,0.5,heads
+Caesar Salad,Parmigiano Reggiano,0.03,kg
+Caesar Salad,Eggs,0.08,dozen
+Caesar Salad,Ciabatta Bread,0.2,loaves
+Insalata Mista,Arugula,0.05,kg
+Insalata Mista,Heirloom Tomatoes,0.1,kg
+Insalata Mista,Extra Virgin Olive Oil,0.02,liters
+Panzanella,Ciabatta Bread,0.3,loaves
+Panzanella,Heirloom Tomatoes,0.15,kg
+Panzanella,Fresh Basil,0.05,bunches
+Panzanella,Extra Virgin Olive Oil,0.02,liters
+Tiramisu,Mascarpone,0.1,kg
+Tiramisu,Ladyfingers,0.2,packs
+Tiramisu,Espresso Beans,0.02,kg
+Tiramisu,Eggs,0.08,dozen
+Tiramisu,Dark Chocolate,0.02,kg
+Panna Cotta,Heavy Cream,0.15,liters
+Panna Cotta,Vanilla Gelato,0.05,liters
+Cannoli,Cannoli Shells,2,pieces
+Cannoli,Ricotta,0.08,kg
+Cannoli,Dark Chocolate,0.02,kg
+Affogato,Vanilla Gelato,0.12,liters
+Affogato,Espresso Beans,0.02,kg
+Chocolate Lava Cake,Dark Chocolate,0.08,kg
+Chocolate Lava Cake,Eggs,0.17,dozen
+Chocolate Lava Cake,Heavy Cream,0.05,liters
+Chocolate Lava Cake,Vanilla Gelato,0.08,liters
+Espresso,Espresso Beans,0.02,kg
+Cappuccino,Espresso Beans,0.02,kg
+Cappuccino,Whole Milk,0.15,liters
+Aperol Spritz,Aperol,0.06,bottles
+Aperol Spritz,Prosecco,0.1,bottles
+House Red Wine,Montepulciano Wine,0.17,bottles
+Limoncello,Limoncello,0.05,bottles

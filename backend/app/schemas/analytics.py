@@ -33,8 +33,10 @@ class SocialAnalytics(BaseModel):
     """Aggregated social media analytics."""
 
     engagement_by_type: list[dict[str, Any]]
+    engagement_by_platform: list[dict[str, Any]] = []
     best_times: list[dict[str, Any]]
     trending_items: list[dict[str, Any]]
+    top_posts: list[dict[str, Any]] = []
     campaign_opportunities: list[dict[str, Any]]
 
 

@@ -20,6 +20,13 @@ export async function fetchAPI(path: string, options?: RequestInit) {
 export const api = {
   // Restaurants
   getRestaurants: () => fetchAPI("/restaurants"),
+  getRestaurant: (id: number) => fetchAPI(`/restaurants/${id}`),
+  createRestaurant: (data: { name: string; cuisine_type?: string; location?: string }) =>
+    fetchAPI("/restaurants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
 
   // Dashboard
   getDashboard: (id: number) => fetchAPI(`/analytics/dashboard/${id}`),
@@ -39,9 +46,36 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     }),
+  elaborateRecommendation: (data: {
+    title: string;
+    description: string;
+    target_item?: string;
+    context?: Record<string, any>;
+  }) =>
+    fetchAPI("/recommendations/elaborate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
 
   // Strategy History
   getStrategyHistory: (id: number) => fetchAPI(`/strategies/history/${id}`),
+  getStrategyProgress: (id: number) => fetchAPI(`/strategies/history/${id}/progress`),
+  evaluateStrategy: (historyId: number) =>
+    fetchAPI(`/strategies/history/${historyId}/evaluate`, { method: "POST" }),
+  adoptStrategy: (data: {
+    restaurant_id: number;
+    strategy_code: string;
+    menu_item_name?: string;
+    title: string;
+    expected_impact?: string;
+    evidence?: Record<string, any>;
+  }) =>
+    fetchAPI("/strategies/adopt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
   updateStrategyStatus: (id: number, status: string) =>
     fetchAPI(`/strategies/history/${id}/status`, {
       method: "PUT",
@@ -65,6 +99,22 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ restaurant_id: restaurantId, message }),
+    }),
+
+  // POS Sales upload (auto-converts standard POS format)
+  uploadPOSSales: (restaurantId: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return fetchAPI(`/uploads/pos-sales?restaurant_id=${restaurantId}`, {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  // AI Recipe Generation
+  generateRecipes: (restaurantId: number) =>
+    fetchAPI(`/uploads/generate-recipes?restaurant_id=${restaurantId}`, {
+      method: "POST",
     }),
 
   // Seed demo data

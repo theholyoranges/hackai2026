@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChefHat,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,24 +29,38 @@ const navItems = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
 ];
 
-const demoRestaurants = [
-  { id: 1, name: "The Golden Fork" },
-  { id: 2, name: "Sakura Sushi Bar" },
-];
+interface Restaurant {
+  id: number;
+  name: string;
+}
 
 interface SidebarProps {
   selectedRestaurant: number;
   onRestaurantChange: (id: number) => void;
+  refreshKey?: number;
 }
 
 export default function Sidebar({
   selectedRestaurant,
   onRestaurantChange,
+  refreshKey = 0,
 }: SidebarProps) {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
-  const currentRestaurant = demoRestaurants.find(
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.getRestaurants();
+        setRestaurants(data);
+      } catch {
+        // silently fail
+      }
+    })();
+  }, [pathname, refreshKey]);
+
+  const currentRestaurant = restaurants.find(
     (r) => r.id === selectedRestaurant
   );
 
@@ -75,7 +90,7 @@ export default function Sidebar({
             className="w-full flex items-center justify-between bg-slate-800 hover:bg-slate-750 rounded-lg px-3 py-2.5 text-sm transition-colors"
           >
             <span className="truncate">
-              {currentRestaurant?.name ?? "Select..."}
+              {currentRestaurant?.name ?? `Restaurant #${selectedRestaurant}`}
             </span>
             <ChevronDown
               className={clsx(
@@ -85,8 +100,13 @@ export default function Sidebar({
             />
           </button>
           {dropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden shadow-lg">
-              {demoRestaurants.map((r) => (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden shadow-lg max-h-60 overflow-y-auto">
+              {restaurants.length === 0 && (
+                <p className="px-3 py-2.5 text-sm text-slate-500">
+                  No restaurants yet
+                </p>
+              )}
+              {restaurants.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => {

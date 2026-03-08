@@ -1,10 +1,20 @@
 "use client";
 
 import clsx from "clsx";
-import { Recommendation } from "@/types";
 
 interface RecommendationCardProps {
-  recommendation: Recommendation;
+  recommendation: {
+    id: number;
+    title: string;
+    explanation_text?: string | null;
+    description?: string;
+    confidence?: number | null;
+    urgency?: string;
+    expected_impact?: string | null;
+    evidence?: Record<string, unknown> | null;
+    status?: string;
+    category?: string;
+  };
   onAccept?: (id: number) => void;
   onReject?: (id: number) => void;
   className?: string;
@@ -37,34 +47,54 @@ export default function RecommendationCard({
   onReject,
   className,
 }: RecommendationCardProps) {
-  const { id, title, description, confidence, urgency, expected_impact, evidence, status, category } =
-    recommendation;
+  const {
+    id,
+    title,
+    explanation_text,
+    confidence,
+    urgency,
+    expected_impact,
+    status,
+    category,
+  } = recommendation;
+
+  const description = explanation_text || recommendation.description || "";
 
   return (
     <div className={clsx("card", className)}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="badge bg-blue-50 text-blue-700 text-xs">
-              {category}
-            </span>
-            <span className={clsx("badge text-xs", urgencyColors[urgency])}>
-              {urgency}
-            </span>
-            <span className={clsx("badge text-xs", confidenceColor(confidence))}>
-              {Math.round(confidence * 100)}% confidence
-            </span>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {category && (
+              <span className="badge bg-blue-50 text-blue-700 text-xs">
+                {category}
+              </span>
+            )}
+            {urgency && (
+              <span className={clsx("badge text-xs", urgencyColors[urgency] || urgencyColors.medium)}>
+                {urgency}
+              </span>
+            )}
+            {confidence != null && (
+              <span className={clsx("badge text-xs", confidenceColor(confidence))}>
+                {Math.round(confidence * 100)}% confidence
+              </span>
+            )}
           </div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
         </div>
-        <span className={clsx("badge text-xs ml-2", statusColors[status])}>
-          {status}
-        </span>
+        {status && (
+          <span className={clsx("badge text-xs ml-2", statusColors[status] || statusColors.pending)}>
+            {status}
+          </span>
+        )}
       </div>
 
       {/* Description */}
-      <p className="text-sm text-slate-600 mb-3">{description}</p>
+      {description && (
+        <p className="text-sm text-slate-600 mb-3">{description}</p>
+      )}
 
       {/* Expected Impact */}
       {expected_impact && (
@@ -73,14 +103,6 @@ export default function RecommendationCard({
             Expected Impact
           </p>
           <p className="text-sm text-emerald-800">{expected_impact}</p>
-        </div>
-      )}
-
-      {/* Evidence */}
-      {evidence && (
-        <div className="bg-slate-50 rounded-lg px-3 py-2 mb-4">
-          <p className="text-xs font-medium text-slate-500">Evidence</p>
-          <p className="text-sm text-slate-600">{evidence}</p>
         </div>
       )}
 

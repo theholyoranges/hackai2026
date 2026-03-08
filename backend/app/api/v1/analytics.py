@@ -85,8 +85,10 @@ def get_social_analytics(restaurant_id: int, db: Session = Depends(get_db)):
         best_times_list = best_times
     return SocialAnalytics(
         engagement_by_type=data.get("engagement_by_type", []),
+        engagement_by_platform=data.get("engagement_by_platform", []),
         best_times=best_times_list,
         trending_items=data.get("trending_items", []),
+        top_posts=data.get("top_posts", []),
         campaign_opportunities=data.get("campaign_opportunities", []),
     )
 

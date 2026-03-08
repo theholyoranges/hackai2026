@@ -100,8 +100,8 @@ class LLMExplanationEngine:
         if self._client is None:
             try:
                 from openai import OpenAI
-
-                self._client = OpenAI()
+                from app.core.config import settings
+                self._client = OpenAI(api_key=settings.OPENAI_API_KEY)
             except Exception:
                 self._client = None
         return self._client

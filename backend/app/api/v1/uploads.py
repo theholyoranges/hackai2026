@@ -13,6 +13,8 @@ from app.services.csv_parser import (
     parse_sales_csv,
     parse_social_posts_csv,
 )
+from app.services.pos_converter import convert_pos_csv
+from app.services.recipe_generator import generate_recipes_for_menu
 from app.services.seed_service import seed_demo_data
 
 router = APIRouter()
@@ -23,6 +25,15 @@ class IngestionSummary(BaseModel):
 
     rows_processed: int
     rows_failed: int
+    errors: list[str]
+
+
+class RecipeGenResponse(BaseModel):
+    """Summary returned after recipe generation."""
+
+    recipes_created: int
+    menu_items_processed: int
+    menu_items_skipped: int
     errors: list[str]
 
 
@@ -99,6 +110,34 @@ async def upload_social_posts_csv(
     content = await file.read()
     summary = parse_social_posts_csv(content, restaurant_id, db)
     return summary
+
+
+@router.post("/pos-sales", response_model=IngestionSummary)
+async def upload_pos_sales(
+    file: UploadFile,
+    restaurant_id: int = Query(..., description="Target restaurant ID"),
+    db: Session = Depends(get_db),
+):
+    """Upload a standard POS-export CSV. Auto-converts columns to our internal format."""
+    _validate_restaurant(db, restaurant_id)
+    content = await file.read()
+    result = convert_pos_csv(content, restaurant_id, db)
+    return IngestionSummary(
+        rows_processed=result.rows_processed,
+        rows_failed=result.rows_failed,
+        errors=result.errors,
+    )
+
+
+@router.post("/generate-recipes", response_model=RecipeGenResponse)
+def generate_recipes(
+    restaurant_id: int = Query(..., description="Target restaurant ID"),
+    db: Session = Depends(get_db),
+):
+    """Generate standard recipe mappings for all menu items."""
+    _validate_restaurant(db, restaurant_id)
+    result = generate_recipes_for_menu(restaurant_id, db)
+    return result
 
 
 @router.post("/seed-demo")

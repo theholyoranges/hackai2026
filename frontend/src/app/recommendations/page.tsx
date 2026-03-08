@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
+import { useRestaurant } from "@/context/RestaurantContext";
 import RecommendationCard from "@/components/cards/RecommendationCard";
 
 const CATEGORIES = ["All", "menu", "inventory", "marketing", "pricing", "operations"];
@@ -15,7 +16,7 @@ const URGENCY_COLORS: Record<string, string> = {
 
 export default function RecommendationsPage() {
   
-  const restaurantId = 1;
+  const { restaurantId } = useRestaurant();
 
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,10 +1,10 @@
-"""Recommendation Engine: matches playbook strategies against live analytics,
-filters out blocked strategies, scores candidates, and persists the top
-recommendations.
+"""Recommendation Engine: gathers restaurant analytics, sends data + strategy
+guidelines to GPT-4o, and persists the LLM-generated recommendations.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -25,8 +25,49 @@ from app.models.strategy import StrategyDefinition
 logger = logging.getLogger(__name__)
 
 
+SYSTEM_PROMPT = """You are a restaurant growth advisor AI. You analyze restaurant data and generate
+actionable recommendations for the owner.
+
+You MUST follow these rules:
+1. Only recommend strategies from the provided strategy playbook — do not invent new strategy types.
+2. Only reference data that is explicitly provided — never fabricate numbers or metrics.
+3. Each recommendation must cite specific evidence from the data.
+4. Be practical and specific — tell the owner exactly what to do.
+5. Prioritize high-impact, time-sensitive actions (e.g., stockouts, expiring inventory) first.
+6. Do NOT recommend strategies that are in the blocked list.
+
+Respond ONLY with a valid JSON array. Each element must have these exact fields:
+{
+  "strategy_code": "<code from playbook>",
+  "title": "<short action title>",
+  "description": "<2-3 sentence explanation of what to do and why, citing specific numbers>",
+  "evidence": {<key data points that support this recommendation>},
+  "confidence": <0.0-1.0 float>,
+  "urgency": "<low|medium|high|critical>",
+  "expected_impact": "<one sentence on expected outcome with specific metrics>",
+  "menu_item_name": "<item name if applicable, else null>"
+}
+
+Return 5-10 recommendations, ordered by urgency then confidence. Return ONLY the JSON array, no markdown."""
+
+
 class RecommendationEngine:
-    """Generates and persists strategy recommendations for a restaurant."""
+    """Generates recommendations by sending restaurant data to GPT-4o."""
+
+    def __init__(self):
+        self._client = None
+
+    @property
+    def client(self):
+        if self._client is None:
+            try:
+                from openai import OpenAI
+                from app.core.config import settings
+                self._client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            except Exception as e:
+                logger.error("Failed to create OpenAI client: %s", e)
+                self._client = None
+        return self._client
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -35,80 +76,65 @@ class RecommendationEngine:
     def generate_recommendations(
         self, db: Session, restaurant_id: int
     ) -> list[Recommendation]:
-        """Run the full recommendation pipeline and return the top 10.
-
-        Steps:
-        1. Gather analytics (menu, inventory, social, sales).
-        2. For each playbook strategy check applicability.
-        3. Filter out blocked strategies.
-        4. Score remaining candidates.
-        5. Persist top 10 as Recommendation rows.
-        """
+        """Run the full LLM-powered recommendation pipeline."""
         analytics = self._gather_analytics(db, restaurant_id)
         blocked_codes = StrategyHistoryEngine.get_blocked_strategy_codes(
             db, restaurant_id
         )
 
-        # Resolve strategy definition ids by code
+        # Build strategy definition lookup
         sd_map: dict[str, StrategyDefinition] = {
             sd.code: sd
-            for sd in db.query(StrategyDefinition).filter(
-                StrategyDefinition.is_active.is_(True)
-            ).all()
+            for sd in db.query(StrategyDefinition)
+            .filter(StrategyDefinition.is_active.is_(True))
+            .all()
         }
 
-        candidates: list[dict[str, Any]] = []
+        # Build the user prompt with all data
+        user_prompt = self._build_prompt(analytics, blocked_codes)
 
-        for strategy in get_playbook():
-            code = strategy["code"]
+        # Call GPT-4o
+        raw_recommendations = self._call_llm(user_prompt)
 
-            # Skip blocked
+        if not raw_recommendations:
+            logger.warning("LLM returned no recommendations, falling back to rule-based")
+            return self._fallback_rule_based(db, restaurant_id, analytics, blocked_codes, sd_map)
+
+        # Parse and persist
+        menu_item_map = {
+            mi.name.lower(): mi
+            for mi in db.query(MenuItem)
+            .filter(MenuItem.restaurant_id == restaurant_id)
+            .all()
+        }
+
+        recommendations: list[Recommendation] = []
+        for rec_data in raw_recommendations[:10]:
+            code = rec_data.get("strategy_code", "")
+            sd = sd_map.get(code)
+            if sd is None:
+                # Try to find closest match
+                continue
+
             if code in blocked_codes:
                 continue
 
-            # Skip if no DB definition
-            sd = sd_map.get(code)
-            if sd is None:
-                continue
+            # Resolve menu item if referenced
+            menu_item_id = None
+            mi_name = rec_data.get("menu_item_name")
+            if mi_name and mi_name.lower() in menu_item_map:
+                menu_item_id = menu_item_map[mi_name.lower()].id
 
-            matches, evidence, confidence = self._match_strategy(strategy, analytics)
-            if not matches:
-                continue
-
-            impact = self._calculate_impact(strategy, evidence)
-            recency_penalty = self._recency_penalty(db, restaurant_id, code)
-            score = impact * confidence * (1.0 - recency_penalty)
-
-            candidates.append(
-                {
-                    "strategy_def": strategy,
-                    "sd": sd,
-                    "evidence": evidence,
-                    "confidence": confidence,
-                    "impact": impact,
-                    "score": score,
-                }
-            )
-
-        # Sort by score descending and take top 10
-        candidates.sort(key=lambda c: c["score"], reverse=True)
-        top = candidates[:10]
-
-        recommendations: list[Recommendation] = []
-        for cand in top:
-            explanation_input = self._build_explanation_input(
-                cand["strategy_def"], cand["evidence"]
-            )
             rec = Recommendation(
                 restaurant_id=restaurant_id,
-                strategy_definition_id=cand["sd"].id,
-                menu_item_id=cand["evidence"].get("menu_item_id"),
-                title=cand["strategy_def"]["name"],
-                evidence=cand["evidence"],
-                confidence=round(cand["confidence"], 4),
-                urgency=self._urgency_label(cand["score"]),
-                expected_impact=str(cand["strategy_def"].get("expected_kpi_targets", {})),
-                explanation_input=explanation_input,
+                strategy_definition_id=sd.id,
+                menu_item_id=menu_item_id,
+                title=rec_data.get("title", sd.name),
+                evidence=rec_data.get("evidence", {}),
+                confidence=min(1.0, max(0.0, float(rec_data.get("confidence", 0.5)))),
+                urgency=rec_data.get("urgency", "medium"),
+                expected_impact=rec_data.get("expected_impact", ""),
+                explanation_text=rec_data.get("description", ""),
                 status=RecommendationStatus.pending,
             )
             db.add(rec)
@@ -122,361 +148,203 @@ class RecommendationEngine:
         return recommendations
 
     # ------------------------------------------------------------------
-    # Strategy matching (rule-based)
+    # LLM interaction
     # ------------------------------------------------------------------
 
-    def _match_strategy(
-        self, strategy_def: dict[str, Any], analytics: dict[str, Any]
-    ) -> tuple[bool, dict[str, Any], float]:
-        """Check whether *strategy_def* applies given current *analytics*.
+    def _build_prompt(
+        self, analytics: dict[str, Any], blocked_codes: set[str]
+    ) -> str:
+        """Build the data prompt for GPT-4o."""
 
-        Returns (matches, evidence_dict, confidence).
-        """
-        code = strategy_def["code"]
-        rules = strategy_def.get("applicability_rules", {})
+        # Summarize playbook strategies
+        playbook_summary = []
+        for s in get_playbook():
+            playbook_summary.append({
+                "code": s["code"],
+                "name": s["name"],
+                "category": s["category"],
+                "description": s["description"],
+                "expected_kpi_targets": s.get("expected_kpi_targets", {}),
+            })
 
-        # Dispatch to specific matchers
-        matcher = getattr(self, f"_match_{code.lower()}", None)
-        if matcher is not None:
-            return matcher(rules, analytics)
+        # Summarize menu data (top 20 items by sales)
+        menu_items = sorted(
+            analytics.get("menu_items", []),
+            key=lambda x: x.get("monthly_orders", 0),
+            reverse=True,
+        )[:20]
+        menu_summary = []
+        for mi in menu_items:
+            menu_summary.append({
+                "name": mi["name"],
+                "category": mi.get("category"),
+                "price": mi["price"],
+                "cost": mi.get("ingredient_cost", 0),
+                "margin_pct": round(mi.get("margin_pct", 0) * 100, 1),
+                "monthly_orders": mi.get("monthly_orders", 0),
+                "weekly_orders": mi.get("weekly_orders", 0),
+                "popularity_score": round(mi.get("popularity_score", 0), 3),
+            })
 
-        # Fallback: generic rule check (always returns no match)
-        return False, {}, 0.0
+        # Pair associations (top 10)
+        pairs = analytics.get("pair_associations", [])[:10]
+        pair_summary = [
+            {
+                "items": f"{p['item_a']} + {p['item_b']}",
+                "frequency": p["frequency"],
+                "confidence": round(p.get("confidence", 0), 3),
+            }
+            for p in pairs
+        ]
 
-    # ---- Individual matchers ------------------------------------------
+        # Inventory alerts
+        inv_alerts = analytics.get("inventory_alerts", [])
+        overstock = analytics.get("overstock_items", [])
+        expiry = analytics.get("expiry_alerts", [])
+        ingredient_costs = analytics.get("ingredient_costs", [])
 
-    def _match_price_increase_high_demand(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_pop = rules.get("min_popularity_score", 0.7)
-        min_margin = rules.get("min_margin_pct", 0.3)
-        for item in analytics.get("menu_items", []):
-            pop = item.get("popularity_score", 0)
-            margin = item.get("margin_pct", 0)
-            if pop >= min_pop and margin >= min_margin:
-                suggested_increase = min(0.15, 0.05 + (pop - 0.7) * 0.2)
-                suggested_price = round(item["price"] * (1 + suggested_increase), 2)
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "current_price": item["price"],
-                    "suggested_price": suggested_price,
-                    "popularity_score": round(pop, 3),
-                    "margin_pct": round(margin, 3),
-                }, min(0.9, 0.6 + pop * 0.3)
-        return False, {}, 0.0
-
-    def _match_price_decrease_low_demand(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        max_pop = rules.get("max_popularity_score", 0.3)
-        min_margin = rules.get("min_margin_pct", 0.4)
-        for item in analytics.get("menu_items", []):
-            pop = item.get("popularity_score", 0)
-            margin = item.get("margin_pct", 0)
-            if pop <= max_pop and margin >= min_margin:
-                decrease = 0.05 + (max_pop - pop) * 0.1
-                suggested_price = round(item["price"] * (1 - min(decrease, 0.10)), 2)
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "current_price": item["price"],
-                    "suggested_price": suggested_price,
-                    "popularity_score": round(pop, 3),
-                }, 0.55
-        return False, {}, 0.0
-
-    def _match_bundle_complementary(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_freq = rules.get("min_pair_frequency", 5)
-        min_conf = rules.get("min_pair_confidence", 0.3)
-        for pair in analytics.get("pair_associations", []):
-            if pair.get("frequency", 0) >= min_freq and pair.get("confidence", 0) >= min_conf:
-                return True, {
-                    "item_a_name": pair["item_a"],
-                    "item_b_name": pair["item_b"],
-                    "pair_frequency": pair["frequency"],
-                    "suggested_bundle_price": pair.get("suggested_bundle_price"),
-                }, min(0.85, 0.5 + pair["confidence"] * 0.5)
-        return False, {}, 0.0
-
-    def _match_bundle_meal_deal(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        categories = analytics.get("menu_categories", [])
-        if len(categories) >= rules.get("min_categories_available", 3):
-            return True, {
-                "categories_available": len(categories),
-                "items": categories[:3],
-            }, 0.5
-        return False, {}, 0.0
-
-    def _match_upsell_premium_variant(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_pop = rules.get("min_popularity_score", 0.6)
-        min_gap = rules.get("min_margin_gap", 0.15)
-        items = analytics.get("menu_items", [])
-        for i, base in enumerate(items):
-            if base.get("popularity_score", 0) < min_pop:
-                continue
-            for premium in items:
-                if premium["id"] == base["id"]:
-                    continue
-                margin_diff = premium.get("margin_pct", 0) - base.get("margin_pct", 0)
-                if margin_diff >= min_gap and premium.get("category") == base.get("category"):
-                    return True, {
-                        "base_item_name": base["name"],
-                        "premium_item_name": premium["name"],
-                        "margin_difference": round(margin_diff, 3),
-                        "menu_item_id": premium["id"],
-                    }, 0.55
-        return False, {}, 0.0
-
-    def _match_remove_underperformer(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        max_pop = rules.get("max_popularity_score", 0.15)
-        max_margin = rules.get("max_margin_pct", 0.25)
-        for item in analytics.get("menu_items", []):
-            pop = item.get("popularity_score", 0)
-            margin = item.get("margin_pct", 0)
-            if pop <= max_pop and margin <= max_margin:
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "weekly_orders": item.get("weekly_orders", 0),
-                    "margin_pct": round(margin, 3),
-                }, 0.65
-        return False, {}, 0.0
-
-    def _match_simplify_menu_category(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        category_stats = analytics.get("category_stats", {})
-        for cat, stats in category_stats.items():
-            if (
-                stats.get("item_count", 0) >= rules.get("min_category_items", 8)
-                and stats.get("avg_popularity", 1.0) <= rules.get("max_avg_popularity", 0.35)
-            ):
-                return True, {
-                    "category": cat,
-                    "current_item_count": stats["item_count"],
-                    "suggested_removals": stats.get("low_performers", []),
-                }, 0.6
-        return False, {}, 0.0
-
-    def _match_renegotiate_supplier(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        for ing in analytics.get("ingredient_costs", []):
-            if ing.get("cost_share_pct", 0) >= rules.get("min_ingredient_cost_share", 0.15):
-                return True, {
-                    "ingredient_name": ing["name"],
-                    "current_unit_cost": ing["unit_cost"],
-                    "cost_share_pct": round(ing["cost_share_pct"], 3),
-                }, 0.5
-        return False, {}, 0.0
-
-    def _match_reorder_alert(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        max_days = rules.get("max_days_of_stock", 3)
-        for inv in analytics.get("inventory_alerts", []):
-            if inv.get("days_of_stock_remaining", 999) <= max_days:
-                return True, {
-                    "ingredient_name": inv["ingredient_name"],
-                    "quantity_on_hand": inv["quantity_on_hand"],
-                    "reorder_threshold": inv.get("reorder_threshold"),
-                    "days_of_stock_remaining": inv["days_of_stock_remaining"],
-                }, 0.8
-        return False, {}, 0.0
-
-    def _match_reduce_overstock(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_ratio = rules.get("min_overstock_ratio", 2.0)
-        for inv in analytics.get("overstock_items", []):
-            if inv.get("overstock_ratio", 0) >= min_ratio:
-                return True, {
-                    "ingredient_name": inv["ingredient_name"],
-                    "quantity_on_hand": inv["quantity_on_hand"],
-                    "normal_weekly_usage": inv.get("weekly_usage", 0),
-                    "suggested_items_to_promote": inv.get("related_menu_items", []),
-                }, 0.55
-        return False, {}, 0.0
-
-    def _match_reduce_waste(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        max_days = rules.get("max_days_to_expiry", 5)
-        for inv in analytics.get("expiry_alerts", []):
-            if inv.get("days_to_expiry", 999) <= max_days:
-                return True, {
-                    "ingredient_name": inv["ingredient_name"],
-                    "expiry_date": str(inv.get("expiry_date")),
-                    "quantity_on_hand": inv["quantity_on_hand"],
-                    "suggested_special": inv.get("suggested_special", "Daily special"),
-                }, 0.75
-        return False, {}, 0.0
-
-    def _match_promote_high_margin_social(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_margin = rules.get("min_margin_pct", 0.5)
-        max_posts = rules.get("max_recent_posts", 1)
-        for item in analytics.get("menu_items", []):
-            if (
-                item.get("margin_pct", 0) >= min_margin
-                and item.get("recent_social_posts", 999) <= max_posts
-            ):
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "margin_pct": round(item["margin_pct"], 3),
-                    "last_promoted_days_ago": item.get("last_promoted_days_ago", 30),
-                }, 0.55
-        return False, {}, 0.0
-
-    def _match_promote_trending_social(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_slope = rules.get("min_sales_trend_slope", 0.1)
-        min_pop = rules.get("min_popularity_score", 0.5)
-        for item in analytics.get("menu_items", []):
-            slope = item.get("sales_trend_slope", 0)
-            pop = item.get("popularity_score", 0)
-            if slope >= min_slope and pop >= min_pop:
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "sales_trend_slope": round(slope, 3),
-                    "current_weekly_orders": item.get("weekly_orders", 0),
-                }, 0.6
-        return False, {}, 0.0
-
-    def _match_optimize_post_timing(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
+        # Social data
         social = analytics.get("social_timing", {})
-        if social.get("total_posts", 0) >= rules.get("min_post_count", 10):
-            return True, {
-                "best_day": social.get("best_day", "Saturday"),
-                "best_hour": social.get("best_hour", 12),
-                "avg_engagement_at_best_time": social.get("best_engagement", 0),
-                "avg_engagement_overall": social.get("avg_engagement", 0),
-            }, 0.55
-        return False, {}, 0.0
 
-    def _match_highlight_margin_item(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_margin = rules.get("min_margin_pct", 0.55)
-        max_pop = rules.get("max_popularity_score", 0.5)
-        for item in analytics.get("menu_items", []):
-            margin = item.get("margin_pct", 0)
-            pop = item.get("popularity_score", 0)
-            if margin >= min_margin and pop <= max_pop:
-                return True, {
-                    "item_name": item["name"],
-                    "menu_item_id": item["id"],
-                    "margin_pct": round(margin, 3),
-                    "current_popularity_score": round(pop, 3),
-                }, 0.55
-        return False, {}, 0.0
+        # Category stats
+        cat_stats = analytics.get("category_stats", {})
 
-    def _match_scale_successful_campaign(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        successes = analytics.get("successful_strategies", [])
-        if len(successes) >= rules.get("min_past_success_count", 1):
-            best = successes[0]
-            return True, {
-                "original_strategy_code": best.get("code"),
-                "past_impact": best.get("actual_impact"),
-                "suggested_expansion": "Repeat at larger scope or across more items",
-            }, 0.6
-        return False, {}, 0.0
+        prompt = f"""## Restaurant Data Analysis
 
-    def _match_bulk_reorder_discount(
-        self, rules: dict, analytics: dict
-    ) -> tuple[bool, dict, float]:
-        min_usage = rules.get("min_weekly_usage_units", 50)
-        for inv in analytics.get("high_usage_ingredients", []):
-            if inv.get("weekly_usage", 0) >= min_usage:
-                return True, {
-                    "ingredient_name": inv["ingredient_name"],
-                    "current_unit_cost": inv.get("unit_cost", 0),
-                    "estimated_bulk_unit_cost": round(inv.get("unit_cost", 0) * 0.9, 2),
-                    "weekly_usage": inv["weekly_usage"],
-                }, 0.5
-        return False, {}, 0.0
+### Menu Items (top 20 by sales)
+{json.dumps(menu_summary, indent=2)}
+
+### Frequently Paired Items
+{json.dumps(pair_summary, indent=2)}
+
+### Category Statistics
+{json.dumps(cat_stats, indent=2, default=str)}
+
+### Inventory — Stockout Risks (≤3 days of stock)
+{json.dumps(inv_alerts, indent=2, default=str)}
+
+### Inventory — Expiring Soon (≤5 days)
+{json.dumps(expiry, indent=2, default=str)}
+
+### Inventory — Overstocked
+{json.dumps(overstock, indent=2, default=str)}
+
+### Inventory — High-Cost Ingredients
+{json.dumps(ingredient_costs, indent=2, default=str)}
+
+### Social Media Performance
+{json.dumps(social, indent=2, default=str)}
+
+### Past Successful Strategies
+{json.dumps(analytics.get("successful_strategies", []), indent=2, default=str)}
+
+---
+
+### Strategy Playbook (ONLY use these strategy codes)
+{json.dumps(playbook_summary, indent=2)}
+
+### Blocked Strategies (DO NOT recommend these)
+{json.dumps(list(blocked_codes))}
+
+---
+
+Analyze this data and generate 5-10 actionable recommendations using ONLY the strategies from the playbook above. Return a JSON array."""
+
+        return prompt
+
+    def _call_llm(self, user_prompt: str) -> list[dict[str, Any]] | None:
+        """Call GPT-4o and parse the JSON response."""
+        if self.client is None:
+            logger.error("OpenAI client not available")
+            return None
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.4,
+                max_tokens=4096,
+            )
+            content = response.choices[0].message.content.strip()
+
+            # Strip markdown code fences if present
+            if content.startswith("```"):
+                content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+                if content.endswith("```"):
+                    content = content[:-3]
+                content = content.strip()
+
+            result = json.loads(content)
+            if isinstance(result, list):
+                return result
+            logger.warning("LLM returned non-list JSON: %s", type(result))
+            return None
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse LLM JSON response: %s", e)
+            logger.debug("Raw response: %s", content if 'content' in dir() else "N/A")
+            return None
+        except Exception as e:
+            logger.error("LLM call failed: %s", e)
+            return None
 
     # ------------------------------------------------------------------
-    # Scoring helpers
+    # Fallback: simple rule-based (if LLM fails)
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _calculate_impact(strategy_def: dict[str, Any], evidence: dict[str, Any]) -> float:
-        """Estimate a 0-1 impact score from the strategy's KPI targets."""
-        targets = strategy_def.get("expected_kpi_targets", {})
-        if not targets:
-            return 0.5
-        # Sum up all target percentages, cap at 100
-        total_pct = sum(targets.values())
-        return min(total_pct / 100.0, 1.0)
+    def _fallback_rule_based(
+        self,
+        db: Session,
+        restaurant_id: int,
+        analytics: dict[str, Any],
+        blocked_codes: set[str],
+        sd_map: dict[str, StrategyDefinition],
+    ) -> list[Recommendation]:
+        """Simple fallback that creates recommendations from obvious signals."""
+        recommendations: list[Recommendation] = []
 
-    @staticmethod
-    def _recency_penalty(db: Session, restaurant_id: int, strategy_code: str) -> float:
-        """Return 0-0.5 penalty based on how recently this strategy was suggested."""
-        from app.models.strategy import StrategyHistory, StrategyDefinition
+        # Stockout alerts → REORDER_ALERT
+        if "REORDER_ALERT" not in blocked_codes and "REORDER_ALERT" in sd_map:
+            for alert in analytics.get("inventory_alerts", [])[:3]:
+                rec = Recommendation(
+                    restaurant_id=restaurant_id,
+                    strategy_definition_id=sd_map["REORDER_ALERT"].id,
+                    title=f"Reorder {alert['ingredient_name']} — {alert['days_of_stock_remaining']} days left",
+                    evidence=alert,
+                    confidence=0.85,
+                    urgency="critical" if alert["days_of_stock_remaining"] <= 1 else "high",
+                    expected_impact=f"Prevent stockout of {alert['ingredient_name']}",
+                    explanation_text=f"{alert['ingredient_name']} has only {alert['days_of_stock_remaining']} days of stock remaining. Reorder immediately to avoid running out.",
+                    status=RecommendationStatus.pending,
+                )
+                db.add(rec)
+                recommendations.append(rec)
 
-        row = (
-            db.query(StrategyHistory.created_at)
-            .join(
-                StrategyDefinition,
-                StrategyHistory.strategy_definition_id == StrategyDefinition.id,
-            )
-            .filter(
-                StrategyHistory.restaurant_id == restaurant_id,
-                StrategyDefinition.code == strategy_code,
-            )
-            .order_by(StrategyHistory.created_at.desc())
-            .first()
-        )
-        if row is None:
-            return 0.0
-        days_ago = (datetime.utcnow() - row[0]).days
-        if days_ago < 7:
-            return 0.5
-        if days_ago < 14:
-            return 0.3
-        if days_ago < 30:
-            return 0.1
-        return 0.0
+        # Expiry alerts → REDUCE_WASTE
+        if "REDUCE_WASTE" not in blocked_codes and "REDUCE_WASTE" in sd_map:
+            for alert in analytics.get("expiry_alerts", [])[:2]:
+                rec = Recommendation(
+                    restaurant_id=restaurant_id,
+                    strategy_definition_id=sd_map["REDUCE_WASTE"].id,
+                    title=f"Use up {alert['ingredient_name']} before it expires",
+                    evidence=alert,
+                    confidence=0.75,
+                    urgency="high",
+                    expected_impact=f"Reduce waste of {alert['ingredient_name']}",
+                    explanation_text=f"{alert['ingredient_name']} expires on {alert.get('expiry_date', 'soon')}. Create a daily special to use it up.",
+                    status=RecommendationStatus.pending,
+                )
+                db.add(rec)
+                recommendations.append(rec)
 
-    @staticmethod
-    def _urgency_label(score: float) -> str:
-        if score >= 0.15:
-            return "high"
-        if score >= 0.08:
-            return "medium"
-        return "low"
+        if recommendations:
+            db.commit()
+            for rec in recommendations:
+                db.refresh(rec)
 
-    @staticmethod
-    def _build_explanation_input(
-        strategy_def: dict[str, Any], evidence: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Build a dict that the LLM explanation layer will consume."""
-        return {
-            "strategy_code": strategy_def["code"],
-            "strategy_name": strategy_def["name"],
-            "category": strategy_def.get("category"),
-            "description": strategy_def.get("description"),
-            "evidence": evidence,
-            "expected_kpi_targets": strategy_def.get("expected_kpi_targets", {}),
-        }
+        return recommendations
 
     # ------------------------------------------------------------------
     # Analytics gathering
@@ -488,13 +356,14 @@ class RecommendationEngine:
 
         # ── Menu items with popularity & margin ──────────────────────
         menu_items_raw = (
-            db.query(MenuItem).filter(
+            db.query(MenuItem)
+            .filter(
                 MenuItem.restaurant_id == restaurant_id,
                 MenuItem.is_active.is_(True),
-            ).all()
+            )
+            .all()
         )
 
-        # Calculate total sales per item in last 30 days
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
 
@@ -520,7 +389,6 @@ class RecommendationEngine:
 
         max_sales = max(sales_totals.values(), default=1) or 1
 
-        # Recent social posts per menu item (last 30 days)
         social_counts = dict(
             db.query(SocialPost.menu_item_id, func.count(SocialPost.id))
             .filter(
@@ -555,8 +423,6 @@ class RecommendationEngine:
                 "weekly_orders": int(weekly_qty),
                 "monthly_orders": int(total_qty),
                 "recent_social_posts": social_counts.get(mi.id, 0),
-                "last_promoted_days_ago": 30,  # simplified
-                "sales_trend_slope": 0.0,  # placeholder
             }
             menu_items.append(item_data)
 
@@ -571,15 +437,14 @@ class RecommendationEngine:
         cat_stats: dict[str, dict] = {}
         for cat, items in category_items.items():
             pops = [i["popularity_score"] for i in items]
-            low = [i["name"] for i in items if i["popularity_score"] < 0.2]
             cat_stats[cat] = {
                 "item_count": len(items),
-                "avg_popularity": sum(pops) / len(pops) if pops else 0,
-                "low_performers": low,
+                "avg_popularity": round(sum(pops) / len(pops), 3) if pops else 0,
+                "total_monthly_orders": sum(i["monthly_orders"] for i in items),
             }
         analytics["category_stats"] = cat_stats
 
-        # ── Pair associations (simplified: co-occurrence in same order) ─
+        # ── Pair associations ─────────────────────────────────────────
         pair_associations: list[dict] = []
         order_items: dict[str, list[int]] = {}
         sales_rows = (
@@ -606,27 +471,24 @@ class RecommendationEngine:
 
         total_orders = len(order_items) or 1
         for (a, b), freq in sorted(pair_counts.items(), key=lambda x: -x[1])[:20]:
-            pair_associations.append(
-                {
-                    "item_a": item_name_map.get(a, str(a)),
-                    "item_b": item_name_map.get(b, str(b)),
-                    "frequency": freq,
-                    "confidence": freq / total_orders,
-                    "suggested_bundle_price": round(
-                        (item_price_map.get(a, 0) + item_price_map.get(b, 0)) * 0.9, 2
-                    ),
-                }
-            )
+            pair_associations.append({
+                "item_a": item_name_map.get(a, str(a)),
+                "item_b": item_name_map.get(b, str(b)),
+                "frequency": freq,
+                "confidence": round(freq / total_orders, 3),
+                "suggested_bundle_price": round(
+                    (item_price_map.get(a, 0) + item_price_map.get(b, 0)) * 0.9, 2
+                ),
+            })
         analytics["pair_associations"] = pair_associations
 
-        # ── Inventory alerts ─────────────────────────────────────────
+        # ── Inventory ─────────────────────────────────────────────────
         inventory_rows = (
             db.query(InventoryItem)
             .filter(InventoryItem.restaurant_id == restaurant_id)
             .all()
         )
 
-        # Estimate daily usage from recipe mappings + sales
         daily_usage: dict[str, float] = {}
         recipe_rows = (
             db.query(RecipeMapping)
@@ -660,46 +522,38 @@ class RecommendationEngine:
             inv_data = {
                 "ingredient_name": inv.ingredient_name,
                 "quantity_on_hand": qty,
+                "unit": inv.unit,
                 "reorder_threshold": float(inv.reorder_threshold) if inv.reorder_threshold else None,
                 "days_of_stock_remaining": round(days_remaining, 1),
                 "weekly_usage": round(weekly_usage, 2),
                 "unit_cost": float(inv.unit_cost) if inv.unit_cost else 0,
             }
 
-            # Low stock alert
             if days_remaining <= 3:
                 inventory_alerts.append(inv_data)
 
-            # Overstock
             if weekly_usage > 0 and qty / weekly_usage >= 2.0:
                 inv_data["overstock_ratio"] = round(qty / weekly_usage, 2)
-                inv_data["related_menu_items"] = []
                 overstock_items.append(inv_data)
 
-            # Expiry
             if inv.expiry_date:
                 from datetime import date
-
                 days_to_expiry = (inv.expiry_date - date.today()).days
                 if days_to_expiry <= 5:
                     inv_data["days_to_expiry"] = days_to_expiry
                     inv_data["expiry_date"] = str(inv.expiry_date)
                     expiry_alerts.append(inv_data)
 
-            # High usage
             if weekly_usage >= 50:
                 high_usage_ingredients.append(inv_data)
 
-            # Ingredient cost share
             cost_val = float(inv.unit_cost or 0) * qty
             if cost_val / total_ingredient_cost >= 0.15:
-                ingredient_costs.append(
-                    {
-                        "name": inv.ingredient_name,
-                        "unit_cost": float(inv.unit_cost or 0),
-                        "cost_share_pct": cost_val / total_ingredient_cost,
-                    }
-                )
+                ingredient_costs.append({
+                    "name": inv.ingredient_name,
+                    "unit_cost": float(inv.unit_cost or 0),
+                    "cost_share_pct": round(cost_val / total_ingredient_cost, 3),
+                })
 
         analytics["inventory_alerts"] = inventory_alerts
         analytics["overstock_items"] = overstock_items
@@ -740,7 +594,7 @@ class RecommendationEngine:
         else:
             analytics["social_timing"] = {"total_posts": 0}
 
-        # ── Successful past strategies ───────────────────────────────
+        # ── Successful past strategies ────────────────────────────────
         successes = StrategyHistoryEngine.get_successful_strategies(db, restaurant_id)
         analytics["successful_strategies"] = [
             {

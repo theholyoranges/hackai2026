@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 
 import { api } from "@/lib/api";
+import { useRestaurant } from "@/context/RestaurantContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,7 +21,7 @@ const SUGGESTED_QUESTIONS = [
 
 export default function ChatPage() {
   
-  const restaurantId = 1;
+  const { restaurantId } = useRestaurant();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

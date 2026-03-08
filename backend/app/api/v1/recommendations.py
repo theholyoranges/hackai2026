@@ -1,6 +1,10 @@
 """Recommendation routes for generating and managing AI recommendations."""
 
+import json
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -8,7 +12,21 @@ from app.models.recommendation import Recommendation, RecommendationStatus
 from app.models.restaurant import Restaurant
 from app.schemas.recommendation import RecommendationResponse, RecommendationStatusUpdate
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+class ElaborateRequest(BaseModel):
+    """Request body for AI elaboration."""
+    title: str
+    description: str
+    target_item: str | None = None
+    context: dict | None = None
+
+
+class ElaborateResponse(BaseModel):
+    """Response from AI elaboration."""
+    elaboration: str
 
 
 def _require_restaurant(db: Session, restaurant_id: int) -> None:
@@ -88,22 +106,99 @@ def update_recommendation_status(
 
     rec.status = new_status
 
-    # If accepted, create a strategy history entry
+    # If accepted, create a strategy history entry and immediately activate it
     if new_status == RecommendationStatus.accepted:
+        from datetime import datetime, timezone
         from app.models.strategy import StrategyHistory, StrategyStatus
+        from app.engines.strategy_evaluation import capture_baseline_snapshot
+
+        now = datetime.now(timezone.utc)
+
+        # Capture baseline metrics at the moment of activation
+        baseline = capture_baseline_snapshot(db, rec.restaurant_id, rec.menu_item_id)
 
         history_entry = StrategyHistory(
             restaurant_id=rec.restaurant_id,
             strategy_definition_id=rec.strategy_definition_id,
             menu_item_id=rec.menu_item_id,
-            status=StrategyStatus.accepted,
-            evidence=rec.evidence,
+            status=StrategyStatus.active,
+            evidence={
+                **(rec.evidence or {}),
+                "baseline_snapshot": baseline,
+            },
             confidence=rec.confidence,
             expected_impact=rec.expected_impact,
-            notes=f"Auto-created from recommendation #{rec.id}",
+            notes=f"Activated from recommendation #{rec.id}",
+            suggested_at=now,
+            activated_at=now,
         )
         db.add(history_entry)
 
     db.commit()
     db.refresh(rec)
     return rec
+
+
+@router.post("/elaborate", response_model=ElaborateResponse)
+def elaborate_recommendation(payload: ElaborateRequest):
+    """Call GPT-4o to elaborate on a recommendation with actionable detail.
+
+    Takes a short recommendation title + description and returns a detailed,
+    restaurant-owner-friendly action plan with examples.
+    """
+    try:
+        from openai import OpenAI
+        from app.core.config import settings
+
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    except Exception as e:
+        logger.error("Failed to create OpenAI client: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service unavailable",
+        )
+
+    system_prompt = """You are a friendly, experienced restaurant growth consultant.
+A restaurant owner has received a short AI recommendation and wants to understand it better.
+
+Your job is to elaborate on the recommendation in a way that is:
+- Written in plain, non-technical language a restaurant owner can understand
+- Actionable with specific step-by-step instructions
+- Includes real-world examples relevant to their restaurant
+- Mentions expected outcomes and timeframes
+- Practical and immediately implementable
+- Encouraging and supportive in tone
+
+Format your response in clean paragraphs. Use bullet points for action steps.
+Keep it under 300 words. Do NOT use markdown headers (#).
+Start directly with the explanation — no preamble like "Great question" or "Sure!"."""
+
+    context_text = ""
+    if payload.context:
+        context_text = f"\n\nAdditional context:\n{json.dumps(payload.context, indent=2, default=str)}"
+
+    user_prompt = f"""Recommendation: {payload.title}
+Summary: {payload.description}
+{f'Target item: {payload.target_item}' if payload.target_item else ''}
+{context_text}
+
+Please elaborate on this recommendation with specific, actionable advice for the restaurant owner."""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.5,
+            max_tokens=1024,
+        )
+        elaboration = response.choices[0].message.content.strip()
+        return ElaborateResponse(elaboration=elaboration)
+    except Exception as e:
+        logger.error("GPT-4o elaboration failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate elaboration",
+        )

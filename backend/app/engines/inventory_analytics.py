@@ -83,9 +83,15 @@ class InventoryAnalyticsEngine:
 
         results: list[dict[str, Any]] = []
         for item in items:
-            daily = usage_map.get(item.ingredient_name, 0.0)
             qty = float(item.quantity_on_hand)
+            # Skip untracked ingredients (auto-created with 0 stock)
+            if qty == 0.0:
+                continue
+            daily = usage_map.get(item.ingredient_name, 0.0)
             days_left = round(qty / daily, 1) if daily > 0 else None
+            # Cap at 0 minimum — negative stock shouldn't happen but guard anyway
+            if days_left is not None and days_left < 0:
+                days_left = 0.0
             results.append(
                 {
                     "ingredient": item.ingredient_name,
@@ -117,9 +123,12 @@ class InventoryAnalyticsEngine:
 
         alerts: list[dict[str, Any]] = []
         for item in items:
+            qty = float(item.quantity_on_hand)
+            # Skip untracked ingredients (auto-created with 0 stock)
+            if qty == 0.0:
+                continue
             proj = proj_map.get(item.ingredient_name, {})
             days_left = proj.get("projected_days_left")
-            qty = float(item.quantity_on_hand)
             threshold = float(item.reorder_threshold) if item.reorder_threshold is not None else None
 
             reasons: list[str] = []
@@ -188,6 +197,7 @@ class InventoryAnalyticsEngine:
                 InventoryItem.restaurant_id == restaurant_id,
                 InventoryItem.expiry_date.isnot(None),
                 InventoryItem.expiry_date <= threshold_date,
+                InventoryItem.quantity_on_hand > 0,  # skip untracked ingredients
             )
             .all()
         )
@@ -197,7 +207,7 @@ class InventoryAnalyticsEngine:
                 "quantity_on_hand": float(item.quantity_on_hand),
                 "unit": item.unit,
                 "expiry_date": item.expiry_date.isoformat() if item.expiry_date else None,
-                "days_until_expiry": (item.expiry_date - date.today()).days
+                "days_until_expiry": max(0, (item.expiry_date - date.today()).days)
                 if item.expiry_date
                 else None,
             }
@@ -223,13 +233,11 @@ class InventoryAnalyticsEngine:
 
         waste_prone: list[dict[str, Any]] = []
         for p in projections:
+            # projections already filters out qty==0 items
             reasons: list[str] = []
             name = p["ingredient"]
             if name in overstock and name in expiry:
                 reasons.append("overstocked_and_near_expiry")
-            elif name in overstock:
-                # Check if also near expiry via the set
-                pass
             if p["daily_usage"] == 0.0 and p["quantity_on_hand"] > 0:
                 reasons.append("zero_usage_with_stock")
             elif p["daily_usage"] > 0 and p["projected_days_left"] is not None and p["projected_days_left"] > 90:

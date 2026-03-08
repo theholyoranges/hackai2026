@@ -1,0 +1,40 @@
+ingredient_name,unit,quantity_on_hand,reorder_threshold,unit_cost,expiry_date,supplier
+Chicken Breast,kg,18.0,8,7.50,2026-03-22,Fresh Farms
+Lamb Leg,kg,12.0,4,18.00,2026-03-20,Fresh Farms
+Basmati Rice,kg,45.0,10,3.50,2026-12-01,Spice World
+All-Purpose Flour,kg,25.0,8,1.80,2026-09-01,Spice World
+Yogurt,liters,10.0,5,2.50,2026-03-18,DairyFresh
+Paneer,kg,1.8,3,9.00,2026-03-14,DairyFresh
+Fresh Spinach,kg,5.0,3,4.00,2026-03-14,Fresh Farms
+Tomatoes,kg,14.0,5,3.00,2026-03-16,Fresh Farms
+Onions,kg,22.0,5,1.50,2026-04-01,Fresh Farms
+Ginger-Garlic Paste,kg,2.5,1,5.00,2026-03-25,Spice World
+Heavy Cream,liters,8.0,4,4.50,2026-03-16,DairyFresh
+Butter,kg,6.0,2,6.00,2026-03-25,DairyFresh
+Ghee,liters,4.5,2,8.00,2026-06-01,DairyFresh
+Cauliflower,heads,10,4,2.50,2026-03-16,Fresh Farms
+Potatoes,kg,15.0,5,1.50,2026-04-01,Fresh Farms
+Green Peas,kg,6.0,2,3.50,2026-03-20,Fresh Farms
+Black Lentils,kg,12.0,4,4.00,2026-12-01,Spice World
+Mango Pulp,liters,6.0,3,6.00,2026-06-01,Spice World
+Black Tea,kg,3.5,1,8.00,2026-12-01,Spice World
+Whole Milk,liters,14.0,6,1.50,2026-03-15,DairyFresh
+Fish Fillets,kg,1.5,4,12.00,2026-03-11,Ocean Catch
+Coconut Milk,cans,12,5,2.50,2026-12-01,Spice World
+Saffron,grams,4.0,2,12.00,2026-12-01,Spice World
+Cardamom,grams,80,30,0.20,2026-12-01,Spice World
+Cumin Seeds,grams,180,50,0.10,2026-12-01,Spice World
+Turmeric Powder,grams,140,40,0.08,2026-12-01,Spice World
+Garam Masala,grams,90,30,0.15,2026-12-01,Spice World
+Pistachios,grams,350,100,0.06,2026-09-01,Spice World
+Rose Water,ml,500,150,0.02,2026-12-01,Spice World
+Cucumber,pieces,12,5,0.80,2026-03-15,Fresh Farms
+Mint Leaves,bunches,6,3,1.50,2026-03-13,Fresh Farms
+Cooking Oil,liters,10.0,3,2.00,2026-09-01,Spice World
+Sugar,grams,3500,500,0.003,2026-12-01,Spice World
+Bell Peppers,kg,4.0,2,4.00,2026-03-16,Fresh Farms
+Garlic,kg,3.0,1,5.00,2026-03-25,Fresh Farms
+Cilantro,grams,60,20,0.10,2026-03-14,Fresh Farms
+Green Chillies,pieces,25,8,0.30,2026-03-16,Fresh Farms
+Lemon,pieces,15,5,0.50,2026-03-18,Fresh Farms
+Curry Leaves,pieces,30,10,0.20,2026-03-15,Fresh Farms

@@ -1,0 +1,36 @@
+name,category,price,ingredient_cost,description,is_active
+Bruschetta Trio,Antipasti,12.5,3.8,"Tomato basil, mushroom truffle, and nduja spread on grilled ciabatta",true
+Burrata Caprese,Antipasti,16.0,5.5,"Creamy burrata with heirloom tomatoes, basil oil, and aged balsamic",true
+Calamari Fritti,Antipasti,14.0,4.2,Crispy fried calamari with marinara and lemon aioli,true
+Arancini,Antipasti,11.0,2.8,Golden risotto balls stuffed with mozzarella and peas,true
+Carpaccio di Manzo,Antipasti,17.0,6.5,"Thinly sliced beef tenderloin with arugula, capers, and shaved Parmigiano",true
+Spaghetti Carbonara,Pasta,19.0,4.5,"Classic Roman carbonara with guanciale, egg yolk, and Pecorino Romano",true
+Penne Arrabbiata,Pasta,16.0,3.2,Penne in spicy tomato sauce with garlic and fresh chili,true
+Fettuccine Alfredo,Pasta,18.0,4.0,House-made fettuccine in creamy Parmigiano butter sauce,true
+Linguine alle Vongole,Pasta,22.0,7.8,"Linguine with fresh clams, white wine, garlic, and parsley",true
+Rigatoni Bolognese,Pasta,20.0,5.5,Slow-simmered beef and pork ragu with San Marzano tomatoes,true
+Cacio e Pepe,Pasta,17.0,3.0,Tonnarelli pasta with Pecorino Romano and cracked black pepper,true
+Lobster Ravioli,Pasta,28.0,11.0,House-made ravioli filled with Maine lobster in saffron cream,true
+Margherita Pizza,Pizza,16.0,3.5,"San Marzano tomato, fresh mozzarella, basil, extra virgin olive oil",true
+Diavola Pizza,Pizza,18.0,4.5,"Spicy salami, mozzarella, roasted peppers, and chili oil",true
+Quattro Formaggi,Pizza,19.0,5.5,"Mozzarella, gorgonzola, fontina, and Parmigiano Reggiano",true
+Prosciutto e Rucola,Pizza,20.0,6.0,"Prosciutto di Parma, arugula, shaved Parmigiano, truffle oil",true
+Pizza Bianca,Pizza,17.0,4.0,"White pizza with ricotta, roasted garlic, spinach, and mozzarella",true
+Chicken Parmigiana,Secondi,24.0,6.5,"Breaded chicken breast with marinara, mozzarella, and spaghetti",true
+Veal Piccata,Secondi,29.0,10.0,Pan-seared veal medallions in lemon-caper butter sauce,true
+Branzino al Forno,Secondi,32.0,12.5,Oven-roasted whole Mediterranean sea bass with herbs and lemon,true
+Osso Buco,Secondi,34.0,13.0,Braised veal shank with saffron risotto and gremolata,true
+Eggplant Parmigiana,Secondi,18.0,4.0,"Layers of fried eggplant, marinara, mozzarella, and basil",true
+Caesar Salad,Insalate,13.0,3.0,"Romaine hearts, house-made Caesar dressing, croutons, shaved Parmigiano",true
+Insalata Mista,Insalate,11.0,2.5,"Mixed greens, cherry tomatoes, cucumber, red onion, balsamic vinaigrette",true
+Panzanella,Insalate,14.0,3.5,"Tuscan bread salad with tomatoes, cucumber, red onion, and basil",true
+Tiramisu,Dolci,12.0,3.5,"Classic layered mascarpone, espresso-soaked ladyfingers, cocoa",true
+Panna Cotta,Dolci,10.0,2.2,Vanilla bean panna cotta with seasonal berry compote,true
+Cannoli,Dolci,9.0,2.0,"Crispy shells filled with sweet ricotta, chocolate chips, pistachios",true
+Affogato,Dolci,8.0,1.8,Vanilla gelato drowned in a shot of hot espresso,true
+Chocolate Lava Cake,Dolci,13.0,3.8,Warm dark chocolate fondant with vanilla gelato,true
+Espresso,Bevande,4.0,0.4,Double shot of house-roasted espresso,true
+Cappuccino,Bevande,5.5,0.8,Double espresso with steamed milk foam,true
+Aperol Spritz,Bevande,14.0,3.5,"Aperol, prosecco, soda water, orange slice",true
+House Red Wine,Bevande,12.0,3.0,Glass of Montepulciano d'Abruzzo,true
+Limoncello,Bevande,9.0,1.5,Chilled house-made limoncello digestivo,true

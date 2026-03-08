@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
+import { useRestaurant } from "@/context/RestaurantContext";
 
 const STATUS_TABS = ["All", "active", "successful", "failed", "archived"];
 
@@ -17,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function StrategyHistoryPage() {
   
-  const restaurantId = 1;
+  const { restaurantId } = useRestaurant();
 
   const [strategies, setStrategies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

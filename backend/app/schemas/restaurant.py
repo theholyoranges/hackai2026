@@ -10,8 +10,8 @@ class RestaurantCreate(BaseModel):
     """Schema for creating a new restaurant."""
 
     name: str
-    cuisine_type: str
-    location: str
+    cuisine_type: Optional[str] = None
+    location: Optional[str] = None
     description: Optional[str] = None
     owner_name: Optional[str] = None
 
