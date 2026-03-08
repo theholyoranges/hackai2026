@@ -48,7 +48,6 @@ class AdoptStrategyRequest(BaseModel):
     strategy_code: str
     menu_item_name: Optional[str] = None
     title: str
-    expected_impact: Optional[str] = None
     evidence: Optional[dict[str, Any]] = None
 
 
@@ -101,12 +100,28 @@ def list_strategy_definitions(db: Session = Depends(get_db)):
 def get_strategy_history(restaurant_id: int, db: Session = Depends(get_db)):
     """Get the full strategy history timeline for a restaurant."""
     _require_restaurant(db, restaurant_id)
-    return (
+    from app.models.menu_item import MenuItem
+
+    entries = (
         db.query(StrategyHistory)
         .filter(StrategyHistory.restaurant_id == restaurant_id)
         .order_by(StrategyHistory.created_at.desc())
         .all()
     )
+
+    results = []
+    for sh in entries:
+        data = StrategyHistoryResponse.model_validate(sh).model_dump()
+        sd = db.query(StrategyDefinition).filter(StrategyDefinition.id == sh.strategy_definition_id).first()
+        if sd:
+            data["strategy_name"] = sd.name
+            data["strategy_category"] = sd.category
+        if sh.menu_item_id:
+            mi = db.query(MenuItem).filter(MenuItem.id == sh.menu_item_id).first()
+            if mi:
+                data["menu_item_name"] = mi.name
+        results.append(data)
+    return results
 
 
 @router.put("/history/{history_id}/status", response_model=StrategyHistoryResponse)
@@ -334,8 +349,8 @@ def adopt_strategy(payload: AdoptStrategyRequest, db: Session = Depends(get_db))
             "adopted_from": "menu_insights",
             "original_title": payload.title,
         },
-        confidence=0.6,
-        expected_impact=payload.expected_impact,
+        confidence=None,
+        expected_impact=None,
         notes=f"Adopted from Menu Insights: {payload.title}",
         suggested_at=now,
         activated_at=now,

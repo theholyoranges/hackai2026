@@ -106,7 +106,9 @@ def capture_current_metrics(
     since: datetime,
 ) -> dict[str, Any]:
     """Capture metrics from ``since`` to now for comparison with baseline."""
-    days_active = max((datetime.now(timezone.utc) - since).days, 1)
+    # Ensure timezone-aware comparison
+    since_aware = since.replace(tzinfo=timezone.utc) if since.tzinfo is None else since
+    days_active = max((datetime.now(timezone.utc) - since_aware).days, 1)
     cutoff = since.date() if hasattr(since, "date") else since
 
     metrics: dict[str, Any] = {

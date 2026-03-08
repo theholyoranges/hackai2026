@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    APP_NAME: str = "Restaurant Growth Copilot"
+    APP_NAME: str = "BistroBrain"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
 

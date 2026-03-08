@@ -272,7 +272,7 @@ export default function SocialInsightsPage() {
     : null;
 
   const bestFormat = engagementByType.length > 0
-    ? [...engagementByType].sort((a: any, b: any) => b.engagement_rate - a.engagement_rate)[0]
+    ? [...engagementByType].sort((a: any, b: any) => b.avg_engagement - a.avg_engagement)[0]
     : null;
 
   const bestMenuItem = trendingItems.length > 0 ? trendingItems[0] : null;
@@ -381,7 +381,7 @@ export default function SocialInsightsPage() {
   const hasData = engagementByType.length > 0 || trendingItems.length > 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-[1400px] mx-auto px-2 sm:px-3 py-10 space-y-10">
       {/* ═══════ HEADER ═══════ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -448,7 +448,7 @@ export default function SocialInsightsPage() {
                   {bestFormat?.post_type ?? "—"}
                 </p>
                 <p className="text-sm text-slate-400 mt-2">
-                  {bestFormat ? "Short videos get the most attention" : "No data yet"}
+                  {bestFormat ? `${bestFormat.post_type}s get the most attention` : "No data yet"}
                 </p>
               </div>
               <div className="w-11 h-11 bg-violet-100 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">

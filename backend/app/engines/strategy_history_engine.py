@@ -35,8 +35,6 @@ class StrategyHistoryEngine:
         strategy_def_id: int,
         menu_item_id: int | None,
         evidence: dict[str, Any],
-        confidence: float,
-        expected_impact: str,
     ) -> StrategyHistory:
         """Create a new StrategyHistory with status *suggested*."""
         sh = StrategyHistory(
@@ -45,8 +43,6 @@ class StrategyHistoryEngine:
             menu_item_id=menu_item_id,
             status=StrategyStatus.suggested,
             evidence=evidence,
-            confidence=confidence,
-            expected_impact=expected_impact,
             suggested_at=datetime.utcnow(),
         )
         db.add(sh)

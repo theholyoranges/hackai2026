@@ -1,4 +1,4 @@
-"""Pydantic schemas for the Restaurant Growth Copilot."""
+"""Pydantic schemas for the BistroBrain."""
 
 from app.schemas.analytics import (
     DashboardSummary,

@@ -14,8 +14,8 @@ import {
   Upload,
   MessageSquare,
   ChevronDown,
-  ChefHat,
 } from "lucide-react";
+import Image from "next/image";
 import { api } from "@/lib/api";
 
 const navItems = [
@@ -69,12 +69,10 @@ export default function Sidebar({
       {/* App Title */}
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <ChefHat className="w-6 h-6" />
-          </div>
+          <Image src="/logo4.png" alt="BistroBrain" width={40} height={40} className="rounded-lg" />
           <div>
-            <h1 className="font-bold text-lg leading-tight">Restaurant</h1>
-            <p className="text-xs text-slate-400">Growth Copilot</p>
+            <h1 className="font-bold text-lg leading-tight">BistroBrain</h1>
+            <p className="text-xs text-slate-400">Restaurant Intelligence</p>
           </div>
         </div>
       </div>

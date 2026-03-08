@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Crown,
 
@@ -19,7 +20,6 @@ import {
   AlertTriangle,
   Flame,
   BarChart3,
-  X,
   Lightbulb,
   CheckCircle2,
 } from "lucide-react";
@@ -41,19 +41,6 @@ import { useRestaurant } from "@/context/RestaurantContext";
 /* ------------------------------------------------------------------ */
 /*  Inline markdown renderer                                            */
 /* ------------------------------------------------------------------ */
-function renderInlineMarkdown(text: string) {
-  // Split by **bold**, *italic*, keeping delimiters as capture groups
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return <em key={i}>{part.slice(1, -1)}</em>;
-    }
-    return <span key={i}>{part}</span>;
-  });
-}
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                  */
@@ -103,77 +90,19 @@ export default function MenuInsightsPage() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reviewModal, setReviewModal] = useState<{
-    title: string;
-    description: string;
-    target_item?: string;
-    context?: Record<string, any>;
-  } | null>(null);
-  const [elaboration, setElaboration] = useState<string | null>(null);
-  const [elaborating, setElaborating] = useState(false);
-  const [adopting, setAdopting] = useState(false);
-  const [adopted, setAdopted] = useState(false);
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+  const router = useRouter();
 
-  // Map recommendation type to strategy code
-  const typeToStrategyCode: Record<string, string> = {
-    combo: "BUNDLE_COMPLEMENTARY",
-    promote: "PROMOTE_HIGH_MARGIN_SOCIAL",
-    price: "PRICE_INCREASE_HIGH_DEMAND",
-    waste: "REDUCE_WASTE",
-    remove: "REMOVE_UNDERPERFORMER",
-    improve: "REWORK_LOW_SELLER",
-  };
-
-  const handleReview = useCallback(async (rec: {
-    title: string;
-    reason: string;
-    target: string;
-    type: string;
-  }) => {
-    setReviewModal({
+  const handleReview = (rec: { title: string; reason: string; target: string; type: string }) => {
+    const params = new URLSearchParams({
       title: rec.title,
       description: rec.reason,
-      target_item: rec.target,
-      context: { recommendation_type: rec.type },
+      target: rec.target,
+      source: "menu-insights",
+      type: rec.type,
     });
-    setElaboration(null);
-    setAdopted(false);
-    setElaborating(true);
-    try {
-      const result = await api.elaborateRecommendation({
-        title: rec.title,
-        description: rec.reason,
-        target_item: rec.target,
-        context: { recommendation_type: rec.type },
-      });
-      setElaboration(result.elaboration);
-    } catch {
-      setElaboration("Sorry, we couldn't get AI details right now. Please try again in a moment.");
-    } finally {
-      setElaborating(false);
-    }
-  }, []);
-
-  const handleAdopt = useCallback(async () => {
-    if (!reviewModal || !restaurantId) return;
-    setAdopting(true);
-    try {
-      const strategyCode = typeToStrategyCode[reviewModal.context?.recommendation_type ?? ""] ?? "HIGHLIGHT_MARGIN_ITEM";
-      await api.adoptStrategy({
-        restaurant_id: restaurantId,
-        strategy_code: strategyCode,
-        menu_item_name: reviewModal.target_item,
-        title: reviewModal.title,
-        expected_impact: reviewModal.description,
-      });
-      setAdopted(true);
-    } catch {
-      // silent
-    } finally {
-      setAdopting(false);
-    }
-  }, [reviewModal, restaurantId]);
+    router.push(`/recommendations?review=${encodeURIComponent(params.toString())}`);
+  };
 
   useEffect(() => {
     (async () => {
@@ -293,7 +222,7 @@ export default function MenuInsightsPage() {
           target: `${topCombos[0].antecedents?.[0]} + ${topCombos[0].consequents?.[0]}`,
           reason: `These are ordered together ${((topCombos[0].confidence ?? 0) * 100).toFixed(0)}% of the time. Bundle them with a small discount to boost order size.`,
           impact: "Increase average order value",
-          urgency: "Opportunity",
+          urgency: "",
         }]
       : []),
     ...(puzzles.length > 0
@@ -306,7 +235,7 @@ export default function MenuInsightsPage() {
           target: puzzles[0].item,
           reason: `${puzzles[0].item} has great margins ($${Number(puzzles[0].margin).toFixed(2)}/order) but low sales. A social post or menu highlight could boost orders.`,
           impact: "Unlock untapped profit",
-          urgency: "Quick Win",
+          urgency: "",
         }]
       : []),
     ...(stars.length > 0 && highestMargin
@@ -319,7 +248,7 @@ export default function MenuInsightsPage() {
           target: stars[0].item,
           reason: `${stars[0].item} is your top performer with strong demand. A 5-8% price increase is unlikely to hurt volume and will boost revenue.`,
           impact: "Revenue boost with minimal risk",
-          urgency: "Recommended",
+          urgency: "",
         }]
       : []),
     ...(dogs.length > 0
@@ -332,7 +261,7 @@ export default function MenuInsightsPage() {
           target: dogs[dogs.length - 1].item,
           reason: `${dogs[dogs.length - 1].item} has low sales and low margins. The ingredients are going to waste. Rework the recipe or run a daily special.`,
           impact: "Cut food waste costs",
-          urgency: "Watch",
+          urgency: "",
         }]
       : []),
     ...(dogs.length > 1
@@ -345,7 +274,7 @@ export default function MenuInsightsPage() {
           target: dogs[0].item,
           reason: `${dogs[0].item} sells only ${dogs[0].qty_sold} units with thin margins. Dropping it simplifies your kitchen and reduces waste.`,
           impact: "Simpler menu, less waste",
-          urgency: "Low Priority",
+          urgency: "",
         }]
       : []),
     ...(bottomSeller
@@ -358,7 +287,7 @@ export default function MenuInsightsPage() {
           target: bottomSeller.item,
           reason: `${bottomSeller.item} has only ${bottomSeller.qty_sold} orders and $${Number(bottomSeller.revenue).toFixed(0)} revenue this month. Ask AI for creative ideas to boost its appeal — new description, pairing, or repositioning.`,
           impact: "Turn a weak dish into a winner",
-          urgency: "AI Powered",
+          urgency: "",
         }]
       : []),
   ];
@@ -366,7 +295,7 @@ export default function MenuInsightsPage() {
   const maxBarQty = Math.max(...hourlyChartData.map(d => d.qty as number), 1);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-[1400px] mx-auto px-2 sm:px-3 py-10 space-y-10">
       {/* ═══════ HEADER ═══════ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -668,9 +597,11 @@ export default function MenuInsightsPage() {
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/80 shadow-sm">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${rec.badgeColor}`}>
-                      {rec.urgency}
-                    </span>
+                    {rec.urgency && (
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${rec.badgeColor}`}>
+                        {rec.urgency}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-base font-bold text-slate-900 mb-1">
                     {rec.title}
@@ -782,121 +713,7 @@ export default function MenuInsightsPage() {
         </motion.div>
       )}
 
-      {/* ═══════ REVIEW MODAL ═══════ */}
-      {reviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
-                  <Sparkles className="w-5 h-5 text-indigo-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{reviewModal.title}</h3>
-                  {reviewModal.target_item && (
-                    <p className="text-sm text-indigo-600 font-medium mt-0.5">{reviewModal.target_item}</p>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => { setReviewModal(null); setElaboration(null); }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 overflow-y-auto flex-1">
-              {elaborating ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-                  <p className="text-sm text-slate-400">AI is analyzing this recommendation...</p>
-                </div>
-              ) : elaboration ? (
-                <div className="space-y-1">
-                  {elaboration.split("\n").map((line, i) => {
-                    const trimmed = line.trim();
-                    if (!trimmed) return <div key={i} className="h-2" />;
-                    // Numbered list: 1. or 1)
-                    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
-                    if (numberedMatch) {
-                      return (
-                        <div key={i} className="flex items-start gap-2.5 my-1">
-                          <span className="text-xs font-bold text-indigo-500 bg-indigo-50 w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                            {numberedMatch[1]}
-                          </span>
-                          <span className="text-sm text-slate-700 leading-relaxed">{renderInlineMarkdown(numberedMatch[2])}</span>
-                        </div>
-                      );
-                    }
-                    // Bullet list
-                    if (trimmed.startsWith("- ") || trimmed.startsWith("• ") || trimmed.startsWith("* ")) {
-                      const content = trimmed.replace(/^[-•*]\s+/, "");
-                      return (
-                        <div key={i} className="flex items-start gap-2.5 my-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-[7px] shrink-0" />
-                          <span className="text-sm text-slate-700 leading-relaxed">{renderInlineMarkdown(content)}</span>
-                        </div>
-                      );
-                    }
-                    // Regular paragraph
-                    return <p key={i} className="text-sm text-slate-700 leading-relaxed my-1.5">{renderInlineMarkdown(trimmed)}</p>;
-                  })}
-                </div>
-              ) : null}
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-slate-50/50">
-              <button
-                onClick={() => { setReviewModal(null); setElaboration(null); setAdopted(false); }}
-                className="text-sm font-medium text-slate-500 hover:text-slate-700 px-4 py-2 transition-colors"
-              >
-                Close
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => reviewModal && handleReview({
-                    title: reviewModal.title,
-                    reason: reviewModal.description,
-                    target: reviewModal.target_item ?? "",
-                    type: reviewModal.context?.recommendation_type ?? "",
-                  })}
-                  disabled={elaborating}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:text-indigo-300 px-3 py-2 transition-colors inline-flex items-center gap-1.5"
-                >
-                  <Zap className="w-3.5 h-3.5" /> Regenerate
-                </button>
-                {adopted ? (
-                  <span className="bg-emerald-100 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-lg inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Strategy Active — Tracking Started
-                  </span>
-                ) : (
-                  <button
-                    onClick={handleAdopt}
-                    disabled={adopting || elaborating}
-                    className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
-                  >
-                    {adopting ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4" />
-                    )}
-                    {adopting ? "Applying..." : "Apply This Strategy"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      {/* Review navigates to /recommendations */}
     </div>
   );
 }

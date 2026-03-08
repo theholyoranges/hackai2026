@@ -84,7 +84,7 @@ def _gather_context(db: Session, restaurant_id: int) -> dict[str, Any]:
 
 def _build_system_prompt(context: dict[str, Any]) -> str:
     """Build the system prompt with restaurant context."""
-    return f"""You are the Restaurant Growth Copilot, an AI assistant helping restaurant owners
+    return f"""You are BistroBrain, an AI assistant helping restaurant owners
 make data-driven decisions to grow their business. You have access to the following real-time
 data for {context['restaurant_name']} ({context.get('cuisine_type', 'restaurant')}):
 

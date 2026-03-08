@@ -59,6 +59,10 @@ class StrategyHistoryResponse(BaseModel):
     cooldown_until: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    # Enriched fields (optional, populated by API)
+    strategy_name: Optional[str] = None
+    strategy_category: Optional[str] = None
+    menu_item_name: Optional[str] = None
 
 
 class StrategyStatusUpdate(BaseModel):

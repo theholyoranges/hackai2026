@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Package,
   AlertTriangle,
@@ -97,6 +98,18 @@ export default function InventoryInsightsPage() {
   const [error, setError] = useState<string | null>(null);
   const [tableSort, setTableSort] = useState<"days" | "usage" | "stock">("days");
   const [showAll, setShowAll] = useState(false);
+  const router = useRouter();
+
+  const handleInventoryReview = (rec: { title: string; reason: string; target: string; type: string }) => {
+    const params = new URLSearchParams({
+      title: rec.title,
+      description: rec.reason,
+      target: rec.target,
+      source: "inventory",
+      type: rec.type,
+    });
+    router.push(`/recommendations?review=${encodeURIComponent(params.toString())}`);
+  };
 
   useEffect(() => {
     (async () => {
@@ -188,7 +201,7 @@ export default function InventoryInsightsPage() {
   const hasAlerts = stockoutRisks.length > 0 || expiryRisks.length > 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-[1400px] mx-auto px-2 sm:px-3 py-10 space-y-10">
       {/* ═══════ HEADER ═══════ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -618,6 +631,88 @@ export default function InventoryInsightsPage() {
           </div>
         </motion.div>
       )}
+
+      {/* ═══════ INVENTORY RECOMMENDATIONS ═══════ */}
+      {(() => {
+        const invRecs: { title: string; reason: string; target: string; type: string; icon: typeof Trash2; color: string }[] = [];
+
+        // Waste-prone items → run a special deal
+        for (const item of wasteProne.slice(0, 2)) {
+          invRecs.push({
+            title: "Run a Special to Reduce Waste",
+            target: item.ingredient,
+            reason: `${item.ingredient} has ${item.quantity_on_hand?.toFixed(1)} ${item.unit} on hand with high waste risk. Create a daily special or combo to use it up before it goes bad.`,
+            type: "waste_special",
+            icon: Flame,
+            color: "bg-orange-50 border-orange-200 text-orange-600",
+          });
+        }
+
+        // Overstock → order less next time
+        for (const item of overstockRisks.slice(0, 2)) {
+          invRecs.push({
+            title: "Reduce Next Order Quantity",
+            target: item.ingredient,
+            reason: `${item.ingredient} has ${item.projected_days_left?.toFixed(0)} days of supply (${item.quantity_on_hand?.toFixed(1)} ${item.unit}). Cut your next order by 30-50% to avoid tying up cash in excess stock.`,
+            type: "reduce_order",
+            icon: TrendingDown,
+            color: "bg-blue-50 border-blue-200 text-blue-600",
+          });
+        }
+
+        // Reorder alerts → reorder soon
+        for (const item of reorderAlerts.slice(0, 2)) {
+          invRecs.push({
+            title: "Reorder Soon",
+            target: item.ingredient,
+            reason: `${item.ingredient} has only ${item.projected_days_left?.toFixed(0)} days of stock left at current usage. Place an order now to prevent a stockout.`,
+            type: "reorder",
+            icon: RotateCcw,
+            color: "bg-red-50 border-red-200 text-red-600",
+          });
+        }
+
+        if (invRecs.length === 0) return null;
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-5 h-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold text-slate-900">Inventory Recommendations</h2>
+            </div>
+            <p className="text-sm text-slate-400 mb-5">Actions to reduce waste, save costs, and prevent stockouts</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {invRecs.map((rec, i) => {
+                const Icon = rec.icon;
+                return (
+                  <div
+                    key={i}
+                    className={`rounded-xl border p-4 ${rec.color}`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon className="w-4 h-4" />
+                      <span className="text-sm font-bold text-slate-900">{rec.title}</span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-700 mb-1">{rec.target}</p>
+                    <p className="text-xs text-slate-600 mb-3 leading-relaxed">{rec.reason}</p>
+                    <button
+                      onClick={() => handleInventoryReview(rec)}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+                    >
+                      Review <span className="text-[10px]">→</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        );
+      })()}
     </div>
   );
 }

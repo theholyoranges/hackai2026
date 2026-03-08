@@ -25,16 +25,19 @@ from app.models.strategy import StrategyDefinition
 logger = logging.getLogger(__name__)
 
 
-SYSTEM_PROMPT = """You are a restaurant growth advisor AI. You analyze restaurant data and generate
-actionable recommendations for the owner.
+SYSTEM_PROMPT = """You are BistroBrain, a restaurant growth advisor AI. You analyze restaurant data and generate
+actionable, localized recommendations for the owner.
 
 You MUST follow these rules:
 1. Only recommend strategies from the provided strategy playbook — do not invent new strategy types.
 2. Only reference data that is explicitly provided — never fabricate numbers or metrics.
 3. Each recommendation must cite specific evidence from the data.
 4. Be practical and specific — tell the owner exactly what to do.
-5. Prioritize high-impact, time-sensitive actions (e.g., stockouts, expiring inventory) first.
+5. Prioritize high-impact, time-sensitive actions (e.g., stockouts, expiring inventory, weather, local events) first.
 6. Do NOT recommend strategies that are in the blocked list.
+7. EVERY recommendation must be UNIQUE — do not repeat the same strategy code with the same item. Each recommendation should address a different opportunity.
+8. Factor in the local context (weather, nearby events, location demographics) when making recommendations.
+9. Do NOT fabricate percentages, confidence scores, or estimated impact numbers. Only cite real data.
 
 Respond ONLY with a valid JSON array. Each element must have these exact fields:
 {
@@ -42,13 +45,11 @@ Respond ONLY with a valid JSON array. Each element must have these exact fields:
   "title": "<short action title>",
   "description": "<2-3 sentence explanation of what to do and why, citing specific numbers>",
   "evidence": {<key data points that support this recommendation>},
-  "confidence": <0.0-1.0 float>,
   "urgency": "<low|medium|high|critical>",
-  "expected_impact": "<one sentence on expected outcome with specific metrics>",
   "menu_item_name": "<item name if applicable, else null>"
 }
 
-Return 5-10 recommendations, ordered by urgency then confidence. Return ONLY the JSON array, no markdown."""
+Return 8-12 diverse recommendations covering different strategy categories, ordered by urgency. Return ONLY the JSON array, no markdown."""
 
 
 class RecommendationEngine:
@@ -100,6 +101,13 @@ class RecommendationEngine:
             logger.warning("LLM returned no recommendations, falling back to rule-based")
             return self._fallback_rule_based(db, restaurant_id, analytics, blocked_codes, sd_map)
 
+        # Clear old pending recommendations before generating new ones
+        db.query(Recommendation).filter(
+            Recommendation.restaurant_id == restaurant_id,
+            Recommendation.status == RecommendationStatus.pending,
+        ).delete()
+        db.flush()
+
         # Parse and persist
         menu_item_map = {
             mi.name.lower(): mi
@@ -109,19 +117,26 @@ class RecommendationEngine:
         }
 
         recommendations: list[Recommendation] = []
-        for rec_data in raw_recommendations[:10]:
+        seen_keys: set[str] = set()  # Dedup by (strategy_code, menu_item_name)
+
+        for rec_data in raw_recommendations[:12]:
             code = rec_data.get("strategy_code", "")
             sd = sd_map.get(code)
             if sd is None:
-                # Try to find closest match
                 continue
 
             if code in blocked_codes:
                 continue
 
+            # Dedup: same strategy + same item = duplicate
+            mi_name = rec_data.get("menu_item_name")
+            dedup_key = f"{code}:{(mi_name or '').lower()}"
+            if dedup_key in seen_keys:
+                continue
+            seen_keys.add(dedup_key)
+
             # Resolve menu item if referenced
             menu_item_id = None
-            mi_name = rec_data.get("menu_item_name")
             if mi_name and mi_name.lower() in menu_item_map:
                 menu_item_id = menu_item_map[mi_name.lower()].id
 
@@ -131,9 +146,9 @@ class RecommendationEngine:
                 menu_item_id=menu_item_id,
                 title=rec_data.get("title", sd.name),
                 evidence=rec_data.get("evidence", {}),
-                confidence=min(1.0, max(0.0, float(rec_data.get("confidence", 0.5)))),
+                confidence=None,
                 urgency=rec_data.get("urgency", "medium"),
-                expected_impact=rec_data.get("expected_impact", ""),
+                expected_impact=None,
                 explanation_text=rec_data.get("description", ""),
                 status=RecommendationStatus.pending,
             )
@@ -192,7 +207,6 @@ class RecommendationEngine:
             {
                 "items": f"{p['item_a']} + {p['item_b']}",
                 "frequency": p["frequency"],
-                "confidence": round(p.get("confidence", 0), 3),
             }
             for p in pairs
         ]
@@ -209,7 +223,24 @@ class RecommendationEngine:
         # Category stats
         cat_stats = analytics.get("category_stats", {})
 
+        # Local context (hardcoded for now — can be replaced with real weather/events API later)
+        local_context = analytics.get("local_context", {
+            "weather": "rainy, cool evening expected",
+            "nearby_events": "HackUTD hackathon happening nearby — large student crowd expected",
+            "location": "Richardson, TX",
+            "demographics": "Mix of college students, young professionals, and suburban families",
+            "time_of_day": "evening",
+            "day_of_week": datetime.now().strftime("%A"),
+        })
+
         prompt = f"""## Restaurant Data Analysis
+
+### Local Context (IMPORTANT — factor this into recommendations)
+- Weather: {local_context.get("weather", "unknown")}
+- Nearby Events: {local_context.get("nearby_events", "none")}
+- Location: {local_context.get("location", "unknown")}
+- Demographics: {local_context.get("demographics", "general")}
+- Current Day: {local_context.get("day_of_week", "unknown")}
 
 ### Menu Items (top 20 by sales)
 {json.dumps(menu_summary, indent=2)}
@@ -248,7 +279,12 @@ class RecommendationEngine:
 
 ---
 
-Analyze this data and generate 5-10 actionable recommendations using ONLY the strategies from the playbook above. Return a JSON array."""
+Generate 8-12 diverse, actionable recommendations using ONLY the strategies from the playbook above.
+IMPORTANT:
+- Each recommendation must target a DIFFERENT opportunity. Do not repeat the same strategy for the same item.
+- Include at least 2 recommendations driven by local context (weather, events, demographics).
+- Cover multiple categories: menu, inventory, marketing, operations, pricing.
+Return a JSON array."""
 
         return prompt
 
@@ -313,9 +349,9 @@ Analyze this data and generate 5-10 actionable recommendations using ONLY the st
                     strategy_definition_id=sd_map["REORDER_ALERT"].id,
                     title=f"Reorder {alert['ingredient_name']} — {alert['days_of_stock_remaining']} days left",
                     evidence=alert,
-                    confidence=0.85,
+                    confidence=None,
                     urgency="critical" if alert["days_of_stock_remaining"] <= 1 else "high",
-                    expected_impact=f"Prevent stockout of {alert['ingredient_name']}",
+                    expected_impact=None,
                     explanation_text=f"{alert['ingredient_name']} has only {alert['days_of_stock_remaining']} days of stock remaining. Reorder immediately to avoid running out.",
                     status=RecommendationStatus.pending,
                 )
@@ -330,9 +366,9 @@ Analyze this data and generate 5-10 actionable recommendations using ONLY the st
                     strategy_definition_id=sd_map["REDUCE_WASTE"].id,
                     title=f"Use up {alert['ingredient_name']} before it expires",
                     evidence=alert,
-                    confidence=0.75,
+                    confidence=None,
                     urgency="high",
-                    expected_impact=f"Reduce waste of {alert['ingredient_name']}",
+                    expected_impact=None,
                     explanation_text=f"{alert['ingredient_name']} expires on {alert.get('expiry_date', 'soon')}. Create a daily special to use it up.",
                     status=RecommendationStatus.pending,
                 )

@@ -135,7 +135,7 @@ class TestStrategyHistory:
         # Record a suggestion
         sh = StrategyHistoryEngine.record_suggestion(
             db, restaurant.id, sd.id, None,
-            evidence={"test": True}, confidence=0.8, expected_impact="5% revenue increase"
+            evidence={"test": True}
         )
         assert sh.status == StrategyStatus.suggested
 
@@ -154,7 +154,7 @@ class TestStrategyHistory:
 
         sh = StrategyHistoryEngine.record_suggestion(
             db, restaurant.id, sd.id, None,
-            evidence={"test": True}, confidence=0.7, expected_impact="test"
+            evidence={"test": True}
         )
         StrategyHistoryEngine.accept_strategy(db, sh.id)
         StrategyHistoryEngine.activate_strategy(db, sh.id)
@@ -172,7 +172,7 @@ class TestStrategyHistory:
 
         sh = StrategyHistoryEngine.record_suggestion(
             db, restaurant.id, sd.id, None,
-            evidence={"test": True}, confidence=0.8, expected_impact="8% AOV increase"
+            evidence={"test": True}
         )
         StrategyHistoryEngine.accept_strategy(db, sh.id)
         StrategyHistoryEngine.activate_strategy(db, sh.id)

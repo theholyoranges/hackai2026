@@ -51,14 +51,28 @@ def generate_recommendations(restaurant_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{restaurant_id}", response_model=list[RecommendationResponse])
 def get_recommendations(restaurant_id: int, db: Session = Depends(get_db)):
-    """Get current recommendations for a restaurant."""
+    """Get current recommendations for a restaurant, enriched with strategy category."""
     _require_restaurant(db, restaurant_id)
-    return (
+    from app.models.strategy import StrategyDefinition
+
+    recs = (
         db.query(Recommendation)
         .filter(Recommendation.restaurant_id == restaurant_id)
         .order_by(Recommendation.created_at.desc())
         .all()
     )
+
+    results = []
+    for rec in recs:
+        data = RecommendationResponse.model_validate(rec).model_dump()
+        sd = db.query(StrategyDefinition).filter(
+            StrategyDefinition.id == rec.strategy_definition_id
+        ).first()
+        if sd:
+            data["category"] = sd.category
+            data["strategy_name"] = sd.name
+        results.append(data)
+    return results
 
 
 @router.get("/{restaurant_id}/blocked", response_model=list[dict])
@@ -126,9 +140,7 @@ def update_recommendation_status(
                 **(rec.evidence or {}),
                 "baseline_snapshot": baseline,
             },
-            confidence=rec.confidence,
-            expected_impact=rec.expected_impact,
-            notes=f"Activated from recommendation #{rec.id}",
+            notes=f"Adopted from Recommendations",
             suggested_at=now,
             activated_at=now,
         )

@@ -1,11 +1,18 @@
 "use client";
 
 import "./globals.css";
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import { RestaurantProvider, useRestaurant } from "@/context/RestaurantContext";
 
 function LayoutInner({ children }: { children: React.ReactNode }) {
   const { restaurantId, setRestaurantId, refreshKey } = useRestaurant();
+  const pathname = usePathname();
+  const isLogin = pathname === "/login";
+
+  if (isLogin) {
+    return <>{children}</>;
+  }
 
   return (
     <>

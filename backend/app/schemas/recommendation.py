@@ -17,14 +17,15 @@ class RecommendationResponse(BaseModel):
     menu_item_id: Optional[int]
     title: str
     evidence: Optional[dict[str, Any]]
-    confidence: Optional[float]
     urgency: Optional[str]
-    expected_impact: Optional[str]
     blocked_reason: Optional[str]
     explanation_text: Optional[str]
     status: str
     created_at: datetime
     updated_at: datetime
+    # Enriched fields
+    category: Optional[str] = None
+    strategy_name: Optional[str] = None
 
 
 class RecommendationStatusUpdate(BaseModel):

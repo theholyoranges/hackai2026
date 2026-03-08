@@ -1,4 +1,4 @@
-"""FastAPI application entry point for the Restaurant Growth Copilot."""
+"""FastAPI application entry point for the BistroBrain."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
