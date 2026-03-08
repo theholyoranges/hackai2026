@@ -75,7 +75,7 @@ export default function ChatPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col h-[calc(100vh-4rem)]">
       <h1 className="text-3xl font-bold text-gray-900 mb-6 shrink-0">
-        Chat with Copilot
+        Chat with Bri
       </h1>
 
       {/* Messages Area */}

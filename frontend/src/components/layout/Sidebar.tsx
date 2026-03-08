@@ -69,9 +69,9 @@ export default function Sidebar({
       {/* App Title */}
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <Image src="/logo4.png" alt="BistroBrain" width={40} height={40} className="rounded-lg" />
+          <Image src="/logodos.png" alt="BistroBrain" width={56} height={56} className="rounded-lg" />
           <div>
-            <h1 className="font-bold text-lg leading-tight">BistroBrain</h1>
+            <h1 className="font-bold text-2xl leading-tight">BistroBrain</h1>
             <p className="text-xs text-slate-400">Restaurant Intelligence</p>
           </div>
         </div>
