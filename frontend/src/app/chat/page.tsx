@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
 
 interface Message {
@@ -19,8 +19,8 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export default function ChatPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

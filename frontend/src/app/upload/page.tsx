@@ -112,7 +112,7 @@ export default function UploadPage() {
     try {
       setSeeding(true);
       setSeedResult(null);
-      await api.seedDemo(restaurantId);
+      await api.seedDemo();
       setSeedResult({
         success: true,
         message: "Demo data seeded successfully! Navigate to Dashboard to view insights.",

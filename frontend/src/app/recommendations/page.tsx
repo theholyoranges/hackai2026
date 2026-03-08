@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
-import { RecommendationCard } from "@/components/cards/RecommendationCard";
+import RecommendationCard from "@/components/cards/RecommendationCard";
 
 const CATEGORIES = ["All", "menu", "inventory", "marketing", "pricing", "operations"];
 
@@ -14,8 +14,8 @@ const URGENCY_COLORS: Record<string, string> = {
 };
 
 export default function RecommendationsPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

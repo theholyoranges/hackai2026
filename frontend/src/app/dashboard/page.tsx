@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
-import { StatCard } from "@/components/cards/StatCard";
-import { RecommendationCard } from "@/components/cards/RecommendationCard";
-import { AlertCard } from "@/components/cards/AlertCard";
-import { SimpleLineChart } from "@/components/charts/SimpleLineChart";
+import StatCard from "@/components/cards/StatCard";
+import RecommendationCard from "@/components/cards/RecommendationCard";
+import AlertCard from "@/components/cards/AlertCard";
+import SimpleLineChart from "@/components/charts/SimpleLineChart";
 
 export default function DashboardPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  const restaurantId = 1;
 
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -78,11 +77,20 @@ export default function DashboardPage() {
     );
   }
 
-  const summary = dashboard?.summary ?? {};
   const revenueTrend = dashboard?.revenue_trend ?? [];
-  const recommendations = dashboard?.top_recommendations ?? [];
+  const topItem = dashboard?.top_item;
+  const bottomItem = dashboard?.bottom_item;
+  const highMargin = dashboard?.high_margin_opportunities ?? [];
   const wasteAlerts = dashboard?.waste_alerts ?? [];
   const stockoutAlerts = dashboard?.stockout_alerts ?? [];
+  const recommendations = dashboard?.top_recommendations ?? [];
+
+  // Compute summary stats from available data
+  const totalRevenue = revenueTrend.reduce((sum: number, d: any) => sum + (d.revenue ?? 0), 0);
+  const avgMargin = highMargin.length > 0
+    ? highMargin.reduce((sum: number, m: any) => sum + (m.margin_pct ?? 0), 0) / highMargin.length
+    : null;
+  const itemsAtRisk = stockoutAlerts.length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
@@ -110,26 +118,25 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Revenue"
-          value={summary.total_revenue != null ? `$${Number(summary.total_revenue).toLocaleString()}` : "--"}
-          subtitle={summary.revenue_period ?? ""}
-          trend={summary.revenue_trend}
+          value={`$${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtitle={`${revenueTrend.length} days`}
         />
         <StatCard
           title="Top Item"
-          value={summary.top_item ?? "--"}
-          subtitle={summary.top_item_revenue ? `$${Number(summary.top_item_revenue).toLocaleString()} revenue` : ""}
+          value={topItem?.item ?? "--"}
+          subtitle={topItem ? `$${Number(topItem.revenue).toLocaleString()} revenue` : ""}
         />
         <StatCard
           title="Avg Margin"
-          value={summary.avg_margin != null ? `${(Number(summary.avg_margin) * 100).toFixed(1)}%` : "--"}
-          subtitle="Across all items"
-          trend={summary.margin_trend}
+          value={avgMargin != null ? `${avgMargin.toFixed(1)}%` : "--"}
+          subtitle="Top margin items"
         />
         <StatCard
           title="Items at Risk"
-          value={summary.items_at_risk ?? 0}
-          subtitle="Low stock or expiring"
-          trend={summary.items_at_risk > 0 ? { direction: "down" as const, value: "Needs attention" } : undefined}
+          value={itemsAtRisk}
+          subtitle="Low stock alerts"
+          trend={itemsAtRisk > 0 ? "down" : undefined}
+          trendValue={itemsAtRisk > 0 ? "Needs attention" : undefined}
         />
       </div>
 
@@ -148,7 +155,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900">Top Recommendations</h2>
           {recommendations.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm p-6 text-gray-500 text-center">
-              No recommendations yet. Click "Generate Growth Plan" to get started.
+              No recommendations yet. Click &quot;Generate Growth Plan&quot; to get started.
             </div>
           ) : (
             recommendations.slice(0, 3).map((rec: any) => (
@@ -176,7 +183,7 @@ export default function DashboardPage() {
             <AlertCard
               key={`waste-${i}`}
               title="Waste Risk"
-              message={alert.message ?? `${alert.ingredient}: ${alert.reason}`}
+              message={`${alert.ingredient}: ${alert.waste_reasons?.join(", ") ?? "potential waste"} (${alert.projected_days_left?.toFixed(0) ?? "?"} days of stock)`}
               severity="warning"
             />
           ))}
@@ -185,8 +192,8 @@ export default function DashboardPage() {
             <AlertCard
               key={`stockout-${i}`}
               title="Stockout Risk"
-              message={alert.message ?? `${alert.ingredient}: ${alert.days_left} days remaining`}
-              severity="error"
+              message={`${alert.ingredient}: ${alert.projected_days_left?.toFixed(1) ?? "?"} days remaining (${alert.quantity_on_hand} ${alert.unit} left)`}
+              severity="danger"
             />
           ))}
         </div>

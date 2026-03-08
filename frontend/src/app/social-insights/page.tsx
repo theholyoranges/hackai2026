@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
-import { SimpleBarChart } from "@/components/charts/SimpleBarChart";
+import SimpleBarChart from "@/components/charts/SimpleBarChart";
 
 const HEATMAP_BG = [
   "bg-gray-100",
@@ -21,8 +21,8 @@ function getHeatColor(val: number, max: number): string {
 }
 
 export default function SocialInsightsPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
-import { SimpleBarChart } from "@/components/charts/SimpleBarChart";
+import SimpleBarChart from "@/components/charts/SimpleBarChart";
 
 const QUADRANT_COLORS: Record<string, string> = {
   Star: "bg-green-100 text-green-800",
@@ -29,8 +29,8 @@ function getHeatmapColor(value: number, max: number): string {
 }
 
 export default function MenuInsightsPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);

@@ -14,7 +14,9 @@ import {
 interface SimpleBarChartProps {
   data: Record<string, unknown>[];
   xKey: string;
-  bars: {
+  yKey?: string;
+  color?: string;
+  bars?: {
     dataKey: string;
     color: string;
     name?: string;
@@ -27,11 +29,15 @@ interface SimpleBarChartProps {
 export default function SimpleBarChart({
   data,
   xKey,
+  yKey,
+  color = "#4f46e5",
   bars,
   title,
   height = 300,
   className,
 }: SimpleBarChartProps) {
+  const resolvedBars = bars ?? (yKey ? [{ dataKey: yKey, color, name: yKey }] : []);
+
   return (
     <div className={className}>
       {title && (
@@ -57,8 +63,8 @@ export default function SimpleBarChart({
               fontSize: "12px",
             }}
           />
-          {bars.length > 1 && <Legend />}
-          {bars.map((bar) => (
+          {resolvedBars.length > 1 && <Legend />}
+          {resolvedBars.map((bar) => (
             <Bar
               key={bar.dataKey}
               dataKey={bar.dataKey}

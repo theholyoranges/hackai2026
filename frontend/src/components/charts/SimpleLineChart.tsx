@@ -14,7 +14,9 @@ import {
 interface SimpleLineChartProps {
   data: Record<string, unknown>[];
   xKey: string;
-  lines: {
+  yKey?: string;
+  color?: string;
+  lines?: {
     dataKey: string;
     color: string;
     name?: string;
@@ -27,11 +29,15 @@ interface SimpleLineChartProps {
 export default function SimpleLineChart({
   data,
   xKey,
+  yKey,
+  color = "#4f46e5",
   lines,
   title,
   height = 300,
   className,
 }: SimpleLineChartProps) {
+  const resolvedLines = lines ?? (yKey ? [{ dataKey: yKey, color, name: yKey }] : []);
+
   return (
     <div className={className}>
       {title && (
@@ -57,8 +63,8 @@ export default function SimpleLineChart({
               fontSize: "12px",
             }}
           />
-          {lines.length > 1 && <Legend />}
-          {lines.map((line) => (
+          {resolvedLines.length > 1 && <Legend />}
+          {resolvedLines.map((line) => (
             <Line
               key={line.dataKey}
               type="monotone"

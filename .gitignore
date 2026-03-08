@@ -29,6 +29,12 @@ out/
 .DS_Store
 Thumbs.db
 
+# PostgreSQL data
+pgdata/
+
+# Claude
+.claude/
+
 # Misc
 *.log
 *.sqlite3

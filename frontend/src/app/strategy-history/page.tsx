@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
 
 const STATUS_TABS = ["All", "active", "successful", "failed", "archived"];
@@ -16,8 +16,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function StrategyHistoryPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [strategies, setStrategies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

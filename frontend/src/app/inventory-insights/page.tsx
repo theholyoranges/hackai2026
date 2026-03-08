@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 import { api } from "@/lib/api";
-import { AlertCard } from "@/components/cards/AlertCard";
-import { SimpleBarChart } from "@/components/charts/SimpleBarChart";
+import AlertCard from "@/components/cards/AlertCard";
+import SimpleBarChart from "@/components/charts/SimpleBarChart";
 
 function daysLeftColor(days: number): string {
   if (days <= 2) return "bg-red-100 text-red-800";
@@ -14,8 +14,8 @@ function daysLeftColor(days: number): string {
 }
 
 export default function InventoryInsightsPage() {
-  const searchParams = useSearchParams();
-  const restaurantId = Number(searchParams.get("restaurant_id") ?? 1);
+  
+  const restaurantId = 1;
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +86,7 @@ export default function InventoryInsightsPage() {
                 key={`stockout-${i}`}
                 title="Stockout Risk"
                 message={alert.message ?? `${alert.ingredient}: ~${alert.days_left} days remaining at current usage`}
-                severity="error"
+                severity="danger"
               />
             ))}
             {expiryRisks.map((alert: any, i: number) => (

@@ -18,12 +18,12 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/menu", label: "Menu Insights", icon: UtensilsCrossed },
-  { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/social", label: "Social", icon: Share2 },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/menu-insights", label: "Menu Insights", icon: UtensilsCrossed },
+  { href: "/inventory-insights", label: "Inventory", icon: Package },
+  { href: "/social-insights", label: "Social", icon: Share2 },
   { href: "/recommendations", label: "Recommendations", icon: Lightbulb },
-  { href: "/strategy", label: "Strategy History", icon: History },
+  { href: "/strategy-history", label: "Strategy History", icon: History },
   { href: "/upload", label: "Upload", icon: Upload },
   { href: "/chat", label: "Chat", icon: MessageSquare },
 ];
